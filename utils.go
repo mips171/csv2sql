@@ -35,6 +35,10 @@ func GetDateAdded() string {
 	return dateAdded
 }
 
+func DoNothing() func(string, string) string {
+	return func(value string, _ string) string { return TransformIdentity(value) }
+}
+
 func GetFirstName(value string, email string) string {
 	if value != "" {
 		return value
