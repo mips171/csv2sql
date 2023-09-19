@@ -5,33 +5,33 @@ import (
 	"strings"
 )
 
-func GenerateInsertStatement(tableName string, columnOrder []string, records [][]string, fields []FieldMapping, customerIDCounter *int, customerIdMapping map[string]int) []string {
+func GenerateInsertStatement(tableName string, columnOrder []string, records []map[string]string, fields []FieldMapping, uniqueIdentifier string, uniqueIdMapping map[string]int) []string {
 	var statements []string
 
-	fieldIndexMap := make(map[string]int)
-	for i, name := range records[0] {
-		fieldIndexMap[name] = i
+	// Create a map for faster look-up
+	fieldMap := make(map[string]FieldMapping)
+	for _, field := range fields {
+		fieldMap[field.DbColumnName] = field
 	}
 
-	for _, record := range records[1:] {
+	for _, record := range records {
 		var rowValues []string
-		if customerIDCounter != nil {
-			rowValues = append(rowValues, fmt.Sprintf("%d", *customerIDCounter))
-			customerIdMapping[record[fieldIndexMap["Email Address"]]] = *customerIDCounter
-			(*customerIDCounter)++
-		} else {
-			customerId := customerIdMapping[record[fieldIndexMap["Email Address"]]]
-			rowValues = append(rowValues, fmt.Sprintf("%d", customerId))
+
+		// If a uniqueIdMapping is provided, use it.
+		if uniqueIdMapping != nil {
+			if id, ok := uniqueIdMapping[record[uniqueIdentifier]]; ok {
+				rowValues = append(rowValues, fmt.Sprintf("%d", id))
+			} else {
+				continue // Skip the record if no unique ID is found
+			}
 		}
 
-		email := record[fieldIndexMap["Email Address"]]
-
-		for _, col := range columnOrder[1:] {
-			for _, field := range fields {
-				if col == field.DbColumnName {
-					value := field.Transformation(record[fieldIndexMap[field.CsvFieldName]], email)
-					rowValues = append(rowValues, fmt.Sprintf("'%s'", strings.ReplaceAll(value, "'", "''")))
-				}
+		for _, col := range columnOrder {
+			if field, exists := fieldMap[col]; exists {
+				value := field.Transformation(record[field.CsvFieldName], record[uniqueIdentifier])
+				rowValues = append(rowValues, fmt.Sprintf("'%s'", strings.ReplaceAll(value, "'", "''")))
+			} else {
+				rowValues = append(rowValues, "NULL") // Handle fields not present in the CSV
 			}
 		}
 

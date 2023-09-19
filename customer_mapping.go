@@ -1,5 +1,14 @@
 package main
 
+type CustomerRecord struct {
+	Email     string `csv:"Email"`
+	FirstName string `csv:"First Name"`
+	LastName  string `csv:"Last Name"`
+	Address   string `csv:"Address"`
+	City      string `csv:"City"`
+	//... any other fields your CSV might have.
+}
+
 func GetCustomerMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_customer",

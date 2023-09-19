@@ -22,3 +22,4 @@ go.work
 data/
 csv2sql
 /.DS_Store
+catalog/

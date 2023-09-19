@@ -3,38 +3,73 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/gocarina/gocsv"
 )
 
 func main() {
-	customerMapping := GetCustomerMapping()
-	addressMapping := GetAddressMapping()
+	productMapping := GetProductMapping()
 
-	records, err := ReadCsv("./data/old_data.csv")
+	// Open the file
+	file, err := os.OpenFile("./data/product_cleaned.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
+	defer file.Close()
 
-	sqlFile, err := os.Create("./data/import_data.sql")
+	// Decode the CSV data
+	var products []ProductRecord
+	if err := gocsv.UnmarshalFile(file, &products); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	sqlFile, err := os.Create("./data/import_products.sql")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 	defer sqlFile.Close()
 
-	customerIDCounter := 1                       // This will act as our customer_id
-	var customerIdMapping = make(map[string]int) // Mapping from email to customer_id
-	// Generate the SQL statements for oc_customer table
-	customerInsertStatements := GenerateInsertStatement(customerMapping.TableName, customerMapping.ColumnOrder, records, customerMapping.Fields, &customerIDCounter, customerIdMapping)
-	for _, stmt := range customerInsertStatements {
+	// Global mapping from SKU to product_id
+	var productIdMapping = make(map[string]int)
+
+	var records []map[string]string
+	for index, product := range products {
+		records = append(records, productToMap(product))
+		productIdMapping[product.Model] = index + 1
+	}
+
+	fmt.Print(records[0]["TaxClassId"])
+
+	// Generate product statements
+	productInsertStatements := GenerateInsertStatement(productMapping.TableName, productMapping.ColumnOrder, records, productMapping.Fields, "Model", productIdMapping)
+	for _, stmt := range productInsertStatements {
 		sqlFile.WriteString(stmt + "\n")
 	}
 
-	// Generate the SQL statements for oc_address table
-	addressInsertStatements := GenerateInsertStatement(addressMapping.TableName, addressMapping.ColumnOrder, records, addressMapping.Fields, nil, customerIdMapping)
-	for _, stmt := range addressInsertStatements {
+	// Generate description statements
+	var descriptionRecords []map[string]string
+	descriptionMapping := GetProductDescriptionMapping(productIdMapping)
+	for _, product := range products {
+		descriptionRecords = append(descriptionRecords, productToMap(product))
+	}
+	descriptionInsertStatements := GenerateInsertStatement(descriptionMapping.TableName, descriptionMapping.ColumnOrder, descriptionRecords, descriptionMapping.Fields, "Model", productIdMapping)
+	for _, stmt := range descriptionInsertStatements {
 		sqlFile.WriteString(stmt + "\n")
 	}
+
+	// // Generate trade price statements
+	// var tradePriceRecords []map[string]string
+	// tradePriceMapping := GetProductSpecialMapping(productIdMapping)
+	// for _, product := range products {
+	// 	tradePriceRecords = append(tradePriceRecords, productToMap(product))
+	// }
+	// tradePriceInsertStatements := GenerateInsertStatement(tradePriceMapping.TableName, tradePriceMapping.ColumnOrder, tradePriceRecords, tradePriceMapping.Fields, "Model", productIdMapping)
+	// for _, stmt := range tradePriceInsertStatements {
+	// 	sqlFile.WriteString(stmt + "\n")
+	// }
 
 	fmt.Println("SQL file has been generated successfully.")
 }
