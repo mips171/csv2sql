@@ -18,7 +18,7 @@ func products() {
 	productMapping := GetProductMapping()
 
 	// Open the file
-	file, err := os.OpenFile("./data/product_cleaned_short.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile("./data/product_cleaned.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
