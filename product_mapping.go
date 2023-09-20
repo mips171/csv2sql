@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// This entityrecord struct maps from CSV to a struct
+// This EntityRecord struct maps from CSV to a struct
 type ProductRecord struct {
 	Model              string `csv:"SKU*"`
 	Name               string `csv:"Name"`
