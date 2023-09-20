@@ -25,6 +25,8 @@ type ProductRecord struct {
 	DateAdded          string `csv:"Date Added"`
 	DateModified       string `csv:"Date Modified"`
 	Status             string `csv:"Approved"`
+	UpSellProducts     string `csv:"Upsell Products"`
+	CrossSellProducts  string `csv:"Cross-Sell Products"`
 	// Add other fields as required
 }
 
@@ -67,6 +69,10 @@ func (p ProductRecord) GetValue(fieldName string) interface{} {
 		return p.DateModified
 	case "Status":
 		return p.Status
+	case "UpsellProducts":
+		return p.UpSellProducts
+	case "CrossSellProducts":
+		return p.CrossSellProducts
 	// Add other fields as required
 	default:
 		return nil
@@ -167,8 +173,8 @@ func GetProductRelatedMapping() TableMapping {
 		TableName:   "oc_product_related",
 		ColumnOrder: []string{"product_id", "related_id"},
 		Fields: []FieldMapping{
-			{"Cross-Sell Products", "related_id", MapSkuToProductId},
-			{"Upsell Products", "related_id", MapSkuToProductId},
+			{"UpsellProducts", "related_id", MapSkuToProductId},
+			{"CrossSellProducts", "related_id", MapSkuToProductId},
 		},
 	}
 }
