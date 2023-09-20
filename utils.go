@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -88,7 +87,6 @@ func MapBrandToManufacturerID(brand string, nothing string) interface{} {
 
 func MapProductStatus(entity Entity) interface{} {
 	approved, _ := entity.GetValue("Status").(string)
-	fmt.Println(approved)
 
 	if approved == "y" {
 		return "1"
