@@ -39,65 +39,28 @@ func products() {
 	}
 	defer sqlFile.Close()
 
-	// Global mapping from SKU to product_id
-	var productIdMapping = make(map[string]int)
-
-	var records []map[string]string
+	productIdMapping := make(map[string]int)
 	for index, product := range products {
-		records = append(records, productToMap(product))
 		productIdMapping[product.Model] = index + 1
 	}
 
-	// Generate product statements
-	sqlFile.WriteString("TRUNCATE TABLE `" + productMapping.TableName + "`;\n")
-	productInsertStatements := GenerateInsertStatement(productMapping.TableName, productMapping.ColumnOrder, records, productMapping.Fields, "Model", productIdMapping)
-	for _, stmt := range productInsertStatements {
-		sqlFile.WriteString(stmt + "\n")
+	entities := make([]Entity, len(products))
+	for i, v := range products {
+		entities[i] = v
 	}
 
-	// Generate description statements
-	var descriptionRecords []map[string]string
-	descriptionMapping := GetProductDescriptionMapping(productIdMapping)
-	sqlFile.WriteString("TRUNCATE TABLE `" + descriptionMapping.TableName + "`;\n")
-	for _, product := range products {
-		descriptionRecords = append(descriptionRecords, productToMap(product))
-	}
-	descriptionInsertStatements := GenerateInsertStatement(descriptionMapping.TableName, descriptionMapping.ColumnOrder, descriptionRecords, descriptionMapping.Fields, "Model", productIdMapping)
-	for _, stmt := range descriptionInsertStatements {
-		sqlFile.WriteString(stmt + "\n")
-	}
+	// Use the helper function for each mapping
+	processTable(productMapping, entities, productIdMapping, sqlFile)
+	processTable(GetProductDescriptionMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetProductSpecialMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetProductToStoreMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetProductToCostMapping(productIdMapping), entities, productIdMapping, sqlFile)
+}
 
-	// Generate trade price statements
-	var tradePriceRecords []map[string]string
-	tradePriceMapping := GetProductSpecialMapping(productIdMapping)
-	sqlFile.WriteString("TRUNCATE TABLE `" + tradePriceMapping.TableName + "`;\n")
-	for _, product := range products {
-		tradePriceRecords = append(tradePriceRecords, productToMap(product))
-	}
-	tradePriceInsertStatements := GenerateInsertStatement(tradePriceMapping.TableName, tradePriceMapping.ColumnOrder, tradePriceRecords, tradePriceMapping.Fields, "Model", productIdMapping)
-	for _, stmt := range tradePriceInsertStatements {
-		sqlFile.WriteString(stmt + "\n")
-	}
-
-	var productToStoreRecords []map[string]string
-	productToStoreMapping := GetProductToStoreMapping(productIdMapping)
-	sqlFile.WriteString("TRUNCATE TABLE `" + productToStoreMapping.TableName + "`;\n")
-	for _, product := range products {
-		productToStoreRecords = append(productToStoreRecords, productToMap(product))
-	}
-	productToStoreInsertStatements := GenerateInsertStatement(productToStoreMapping.TableName, productToStoreMapping.ColumnOrder, productToStoreRecords, productToStoreMapping.Fields, "Model", productIdMapping)
-	for _, stmt := range productToStoreInsertStatements {
-		sqlFile.WriteString(stmt + "\n")
-	}
-
-	var productToCostRecords []map[string]string
-	productToCostMapping := GetProductToCostMapping(productIdMapping)
-	sqlFile.WriteString("TRUNCATE TABLE `" + productToCostMapping.TableName + "`;\n")
-	for _, product := range products {
-		productToCostRecords = append(productToCostRecords, productToMap(product))
-	}
-	productToCostInsertStatements := GenerateInsertStatement(productToCostMapping.TableName, productToCostMapping.ColumnOrder, productToCostRecords, productToCostMapping.Fields, "Model", productIdMapping)
-	for _, stmt := range productToCostInsertStatements {
+func processTable(tableMapping TableMapping, entities []Entity, productIdMapping map[string]int, sqlFile *os.File) {
+	sqlFile.WriteString("TRUNCATE TABLE `" + tableMapping.TableName + "`;\n")
+	insertStatements := GenerateInsertStatement(tableMapping.TableName, tableMapping.ColumnOrder, entities, tableMapping.Fields, "Model", productIdMapping)
+	for _, stmt := range insertStatements {
 		sqlFile.WriteString(stmt + "\n")
 	}
 }

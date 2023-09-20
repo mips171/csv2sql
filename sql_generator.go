@@ -5,30 +5,21 @@ import (
 	"strings"
 )
 
-func GenerateInsertStatement(tableName string, columnOrder []string, records []map[string]string, fields []FieldMapping, uniqueIdentifier string, uniqueIdMapping map[string]int) []string {
+func GenerateInsertStatement(tableName string, columnOrder []string, entities []Entity, fields []FieldMapping, uniqueIdentifier string, uniqueIdMapping map[string]int) []string {
 	var statements []string
 
 	// Create a map for faster look-up
 	fieldMap := make(map[string]FieldMapping)
 	for _, field := range fields {
-		fieldMap[field.DbColumnName] = field
+		fieldMap[field.DBColumnName] = field
 	}
 
-	for _, record := range records {
+	for _, entity := range entities {
 		var rowValues []string
-
-		// // If a uniqueIdMapping is provided, use it.
-		// if uniqueIdMapping != nil {
-		// 	if id, ok := uniqueIdMapping[record[uniqueIdentifier]]; ok {
-		// 		rowValues = append(rowValues, fmt.Sprintf("%d", id))
-		// 	} else {
-		// 		continue // Skip the record if no unique ID is found
-		// 	}
-		// }
 
 		for _, col := range columnOrder {
 			if field, exists := fieldMap[col]; exists {
-				value := field.Transformation(record[field.CsvFieldName], record[uniqueIdentifier])
+				value := field.MappingFunction(entity)
 				switch v := value.(type) {
 				case string:
 					rowValues = append(rowValues, fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")))

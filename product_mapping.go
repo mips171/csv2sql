@@ -13,6 +13,8 @@ type ProductRecord struct {
 	SEOMetaDescription string `csv:"SEO Meta Description"`
 	SEOMetaKeywords    string `csv:"SEO Meta Keywords"`
 	Price              string `csv:"Price (Retail)"`
+	TradePrice         string `csv:"Price (Trade)"`
+	Cost               string `csv:"Cost Price"`
 	Quantity           string `csv:"Qty In Stock (Telco Antennas)"`
 	Length             string `csv:"Length (Shipping)"`
 	Width              string `csv:"Width (Shipping)"`
@@ -21,7 +23,52 @@ type ProductRecord struct {
 	TaxClassId         string `csv:"Tax Free Item"`
 	DateAdded          string `csv:"Date Added"`
 	DateModified       string `csv:"Date Modified"`
+	Status             string `csv:"Approved"`
 	// Add other fields as required
+}
+
+func (p ProductRecord) GetValue(fieldName string) interface{} {
+	switch fieldName {
+	case "Model":
+		return p.Model
+	case "Name":
+		return p.Name
+	case "Description":
+		return p.Description
+	case "SEOPagetitle":
+		return p.SEOPagetitle
+	case "SEOMetaDescription":
+		return p.SEOMetaDescription
+	case "SEOMetaKeywords":
+		return p.SEOMetaKeywords
+	case "Price":
+		return p.Price
+	case "TradePrice":
+		return p.TradePrice
+	case "Cost":
+		return p.Cost
+	case "Quantity":
+		return p.Quantity
+	case "Length":
+		return p.Length
+	case "Width":
+		return p.Width
+	case "Height":
+		return p.Height
+	case "Weight":
+		return p.Weight
+	case "TaxClassId":
+		return p.TaxClassId
+	case "DateAdded":
+		return p.DateAdded
+	case "DateModified":
+		return p.DateModified
+	case "Status":
+		return p.Status
+	// Add other fields as required
+	default:
+		return nil
+	}
 }
 
 func productToMap(product ProductRecord) map[string]string {
@@ -34,12 +81,15 @@ func productToMap(product ProductRecord) map[string]string {
 		"SEOMetaDescription": product.SEOMetaDescription,
 		"SEOMetaKeywords":    product.SEOMetaKeywords,
 		"Price":              product.Price,
+		"TradePrice":         product.TradePrice,
+		"Cost":               product.Cost,
 		"Quantity":           product.Quantity,
 		"Length":             product.Length,
 		"Width":              product.Width,
 		"Height":             product.Height,
 		"Weight":             product.Weight,
 		"TaxClassId":         product.TaxClassId,
+		"Status":             product.Status,
 		"DateAdded":          product.DateAdded,
 		"DateModified":       product.DateModified,
 		"Image":              product.Model,
@@ -61,38 +111,36 @@ func GetProductMapping() TableMapping {
 			"subtract", "minimum", "sort_order", "status", "viewed",
 			"date_added", "date_modified"},
 		Fields: []FieldMapping{
-			{"Model", "model", DoNothing()},
-			{"Model", "sku", DoNothing()},
-			{"", "upc", DoNothing()},
-			{"", "ean", DoNothing()},
-			{"", "jan", DoNothing()},
-			{"", "isbn", DoNothing()},
-			{"", "mpn", DoNothing()},
-			{"", "location", DoNothing()},
-			{"Qty In Stock (Telco Antennas)", "quantity", DoNothing()},
-			{"", "stock_status_id", func(_ string, _ string) interface{} { return "7" }}, // Always 7 for "In Stock"
-			{"Model", "image", MapImageFilePath},                                         // Using the Model to map the image file path
-			{"", "manufacturer_id", func(_ string, _ string) interface{} { return "1" }}, // Always 1 for "Telco Antennas"
-			{"", "shipping", func(_ string, _ string) interface{} { return "1" }},        // Always 1 for "Yes"
-			{"Price", "price", func(value string, _ string) interface{} { return GetRetailPrice(value, value) }},
-			{"", "points", DoNothing()},
-			{"Tax Free Item", "tax_class_id", func(value string, _ string) interface{} { return GetTaxClassID(value) }},
-			{"", "date_available", func(_ string, _ string) interface{} { return "" }},
-
-			{"Weight (Shipping)", "weight", DoNothing()},
-			{"", "weight_class_id", func(_ string, _ string) interface{} { return "1" }}, // Always 1 for "Kilogram"
-			{"Length (Shipping)", "length", DoNothing()},
-			{"Width (Shipping)", "width", DoNothing()},
-			{"Height (Shipping)", "height", DoNothing()},
-
-			{"", "length_class_id", func(_ string, _ string) interface{} { return "1" }}, // Always 1 for "Centimeter"
-			{"", "subtract", func(_ string, _ string) interface{} { return "1" }},        // Always 1 for "Yes"
-			{"", "minimum", func(_ string, _ string) interface{} { return "1" }},         // Always 1 for "Yes"
-			{"", "sort_order", func(_ string, _ string) interface{} { return "1" }},      // Always 1 for "Yes"
-			{"Approved", "status", func(value string, _ string) interface{} { return MapProductStatus(value, value) }},
-			{"", "viewed", func(_ string, _ string) interface{} { return "0" }}, // Always 0 for "No"
-			{"Date Added", "date_added", func(_ string, _ string) interface{} { return GetDateAdded() }},
-			{"Date Modified", "date_modified", func(_ string, _ string) interface{} { return GetDateAdded() }},
+			{"Model", "model", DoNothing("Model")},
+			{"Model", "sku", DoNothing("Model")},
+			{"", "upc", ReturnEmptyString()},
+			{"", "ean", ReturnEmptyString()},
+			{"", "jan", ReturnEmptyString()},
+			{"", "isbn", ReturnEmptyString()},
+			{"", "mpn", ReturnEmptyString()},
+			{"", "location", ReturnEmptyString()},
+			{"Quantity", "quantity", DoNothing("Quantity")},
+			{"", "stock_status_id", func(entity Entity) interface{} { return "7" }}, // Always 7 for "In Stock"
+			{"Model", "image", MapImageFilePath},                                    // Using the Model to map the image file path
+			{"", "manufacturer_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Telco Antennas"
+			{"", "shipping", func(entity Entity) interface{} { return "1" }},        // Always 1 for "Yes"
+			{"Price", "price", GetRetailPrice},
+			{"", "points", func(entity Entity) interface{} { return "0" }},
+			{"TaxClassId", "tax_class_id", GetTaxClassID},
+			{"", "date_available", func(entity Entity) interface{} { return "2023-09-20" }}, // example date
+			{"Weight", "weight", DoNothing("Weight")},
+			{"", "weight_class_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Kilogram"
+			{"Length", "length", DoNothing("Length")},
+			{"Width", "width", DoNothing("Width")},
+			{"Height", "height", DoNothing("Height")},
+			{"", "length_class_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Centimeter"
+			{"", "subtract", func(entity Entity) interface{} { return "1" }},        // Always 1 for "Yes"
+			{"", "minimum", func(entity Entity) interface{} { return "1" }},         // Always 1 for "Yes"
+			{"", "sort_order", func(entity Entity) interface{} { return "1" }},      // Always 1 for "Yes"
+			{"Status", "status", MapProductStatus},
+			{"", "viewed", func(entity Entity) interface{} { return "0" }}, // Always 0 for "No"
+			{"DateAdded", "date_added", func(entity Entity) interface{} { return GetDateAdded() }},
+			{"DateModified", "date_modified", func(entity Entity) interface{} { return GetDateAdded() }},
 		},
 	}
 }
@@ -102,16 +150,14 @@ func GetProductDescriptionMapping(productIdMapping map[string]int) TableMapping 
 		TableName:   "oc_product_description",
 		ColumnOrder: []string{"product_id", "language_id", "name", "description", "tag", "meta_title", "meta_description", "meta_keyword"},
 		Fields: []FieldMapping{
-			{"Model", "product_id", func(sku string, _ string) interface{} {
-				return strconv.Itoa(productIdMapping[sku])
-			}},
-			{"", "language_id", func(_ string, _ string) interface{} { return "1" }}, // Always 1 for English
-			{"Name", "name", DoNothing()},
-			{"Description", "description", DoNothing()},
-			{"", "tag", func(_ string, _ string) interface{} { return "" }},
-			{"Name", "meta_title", DoNothing()},
-			{"Name", "meta_description", DoNothing()},
-			{"Name", "meta_keyword", DoNothing()},
+			{"Model", "product_id", GetProductIdTransformation(productIdMapping)},
+			{"", "language_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for English
+			{"Name", "name", DoNothing("Name")},
+			{"Description", "description", DoNothing("Description")},
+			{"", "tag", func(entity Entity) interface{} { return "" }},
+			{"Name", "meta_title", DoNothing("Name")},
+			{"Name", "meta_description", DoNothing("Name")},
+			{"Name", "meta_keyword", DoNothing("Name")},
 		},
 	}
 }
@@ -127,38 +173,30 @@ func GetProductRelatedMapping() TableMapping {
 	}
 }
 
-func GetProductToCategoryMapping() TableMapping {
-	return TableMapping{
-		TableName:   "oc_product_to_category",
-		ColumnOrder: []string{"product_id", "category_id"},
-		Fields: []FieldMapping{
-			{"Category", "category_id", MapCategoryToCategoryId},
-		},
-	}
-}
+// func GetProductToCategoryMapping() TableMapping {
+// 	return TableMapping{
+// 		TableName:   "oc_product_to_category",
+// 		ColumnOrder: []string{"product_id", "category_id"},
+// 		Fields: []FieldMapping{
+// 			{"Category", "category_id", MapCategoryToCategoryId},
+// 		},
+// 	}
+// }
 
-func GetProductCostMapping() TableMapping {
+func GetProductSpecialMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
-		TableName:   "oc_product_cost",
-		ColumnOrder: []string{"product_id", "cost"},
+		TableName:   "oc_product_special",
+		ColumnOrder: []string{"product_id", "customer_group_id", "priority", "price", "date_start", "date_end"},
 		Fields: []FieldMapping{
-			{"Cost Price", "cost", DoNothing()},
-		},
-	}
-}
-
-// need product cost
-// INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES ('5', '0');
-
-func GetProductToStoreMapping(productIdMapping map[string]int) TableMapping {
-	return TableMapping{
-		TableName:   "oc_product_to_store",
-		ColumnOrder: []string{"product_id", "store_id"},
-		Fields: []FieldMapping{
-			{"Model", "product_id", func(sku string, _ string) interface{} {
+			{"Model", "product_id", func(entity Entity) interface{} {
+				sku := entity.GetValue("Model").(string)
 				return strconv.Itoa(productIdMapping[sku])
 			}},
-			{"", "store_id", func(_ string, _ string) interface{} { return "0" }}, // Default store value
+			{"", "customer_group_id", func(entity Entity) interface{} { return "2" }}, // Always 2 for Trade group
+			{"", "priority", func(entity Entity) interface{} { return "0" }},
+			{"TradePrice", "price", GetTradePrice},
+			{"", "date_start", func(entity Entity) interface{} { return "0000-00-00" }}, // Always active start date
+			{"", "date_end", func(entity Entity) interface{} { return "0000-00-00" }},   // Always active end date
 		},
 	}
 }
@@ -170,21 +208,34 @@ func GetProductToCostMapping(productIdMapping map[string]int) TableMapping {
 		TableName:   "oc_product_cost",
 		ColumnOrder: []string{"product_id", "supplier_id", "cost", "cost_amount", "cost_percentage", "cost_additional", "costing_method"},
 		Fields: []FieldMapping{
-			{"Model", "product_id", func(sku string, _ string) interface{} {
-				return strconv.Itoa(productIdMapping[sku])
-			}},
-			{"", "supplier_id", func(_ string, _ string) interface{} { return "0" }},                                // Default store value
-			{"Cost Price", "cost", func(value string, _ string) interface{} { return GetTradePrice(value, value) }}, // reusing getretailprice
-			{"", "cost_amount", func(_ string, _ string) interface{} { return "0.0000" }},                           // Default store value
-			{"", "cost_percentage", func(_ string, _ string) interface{} { return "0.00" }},                         // Default store value
-			{"", "cost_additional", func(_ string, _ string) interface{} { return "0.0000" }},                       // Default store value
-			{"", "costing_method", func(_ string, _ string) interface{} { return "0" }},                             // Default store value
+			{"Model", "product_id", GetProductIdTransformation(productIdMapping)},
+			{"", "supplier_id", func(entity Entity) interface{} { return "0" }}, // Default store value
+			{"Cost", "cost", DoNothing("Cost")},
+			{"Cost", "cost_amount", DoNothing("Cost")},
+			{"", "cost_percentage", func(entity Entity) interface{} { return "0.00" }},   // Default store value
+			{"", "cost_additional", func(entity Entity) interface{} { return "0.0000" }}, // Default store value
+			{"", "costing_method", func(entity Entity) interface{} { return "0" }},       // Default store value
 		},
 	}
 }
 
-var categoryIDCounter = 1
-var categoryToCategoryIdMap = make(map[string]string)
+// need product cost
+// INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES ('5', '0');
+func GetProductToStoreMapping(productIdMapping map[string]int) TableMapping {
+	return TableMapping{
+		TableName:   "oc_product_to_store",
+		ColumnOrder: []string{"product_id", "store_id"},
+		Fields: []FieldMapping{
+			{"Model", "product_id", GetProductIdTransformation(productIdMapping)},
+			{"", "store_id", func(entity Entity) interface{} { return "0" }}, // Default store value
+		},
+	}
+}
+
+var (
+	categoryIDCounter       = 1
+	categoryToCategoryIdMap = make(map[string]string)
+)
 
 func MapCategoryToCategoryId(categoryName string, nothing string) interface{} {
 	if categoryId, ok := categoryToCategoryIdMap[categoryName]; ok {
@@ -196,10 +247,13 @@ func MapCategoryToCategoryId(categoryName string, nothing string) interface{} {
 	return categoryToCategoryIdMap[categoryName]
 }
 
-var productIDCounter = 1
-var skuToProductIdMap = make(map[string]int)
+var (
+	skuToProductIdMap = make(map[string]int)
+	productIDCounter  = 1
+)
 
-func MapSkuToProductId(sku string, nothing string) interface{} {
+func MapSkuToProductId(entity Entity) interface{} {
+	sku, _ := entity.GetValue("SKU").(string)
 	if productId, ok := skuToProductIdMap[sku]; ok {
 		return strconv.Itoa(productId)
 	}
@@ -209,22 +263,19 @@ func MapSkuToProductId(sku string, nothing string) interface{} {
 	return strconv.Itoa(skuToProductIdMap[sku])
 }
 
-func GetRetailPrice(retailPrice, tradePrice string) interface{} {
-	formattedRetailPrice := FormatPriceToFourDecimalPlaces(retailPrice)
+func GetRetailPrice(entity Entity) interface{} {
+	retailPrice := entity.GetValue("Price").(string)
+	tradePrice := entity.GetValue("TradePrice").(string)
 
-	if formattedRetailPrice != "0.0000" {
-		return formattedRetailPrice
+	// Default to retail price
+	if retailPrice != "" {
+		formattedRetailPrice := FormatPriceToFourDecimalPlaces(retailPrice)
+		if formattedRetailPrice != "0.0000" {
+			return formattedRetailPrice
+		}
 	}
 
-	formattedTradePrice := FormatPriceToFourDecimalPlaces(tradePrice)
-	if formattedTradePrice != "0.0000" {
-		return formattedTradePrice
-	}
-
-	return "0.0000"
-}
-
-func GetTradePrice(retailPrice, tradePrice string) interface{} {
+	// Check and format trade price
 	if tradePrice != "" {
 		formattedTradePrice := FormatPriceToFourDecimalPlaces(tradePrice)
 		if formattedTradePrice != "0.0000" {
@@ -232,15 +283,31 @@ func GetTradePrice(retailPrice, tradePrice string) interface{} {
 		}
 	}
 
-	// If trade price exists, set both to their respective values
+	// If neither trade nor retail prices are valid, return "0.0000"
+	return "0.0000"
+}
+
+func GetTradePrice(entity Entity) interface{} {
+	retailPrice := entity.GetValue("Price").(string)
+	tradePrice := entity.GetValue("TradePrice").(string)
+
+	// Check and format trade price
+	if tradePrice != "" {
+		formattedTradePrice := FormatPriceToFourDecimalPlaces(tradePrice)
+		if formattedTradePrice != "0.0000" {
+			return formattedTradePrice
+		}
+	}
+
+	// Default to retail price
 	if retailPrice != "" {
 		formattedRetailPrice := FormatPriceToFourDecimalPlaces(retailPrice)
-
 		if formattedRetailPrice != "0.0000" {
 			return formattedRetailPrice
 		}
 	}
-	// If trade price does not exist, set the default price to the retail price
+
+	// If neither trade nor retail prices are valid, return "0.0000"
 	return "0.0000"
 }
 
@@ -261,7 +328,9 @@ func FormatPriceToFourDecimalPlaces(price string) interface{} {
 	return parts[0] + "." + parts[1][:4] // Return the formatted price
 }
 
-func GetTaxClassID(taxFreeItem string) interface{} {
+func GetTaxClassID(entity Entity) interface{} {
+	taxFreeItem, _ := entity.GetValue("Tax Free Item").(string)
+
 	// Check if the item is a tax-free item
 	if taxFreeItem == "y" {
 		// Return the ID for tax-free items
@@ -272,19 +341,12 @@ func GetTaxClassID(taxFreeItem string) interface{} {
 	return "9"
 }
 
-func GetProductSpecialMapping(productIdMapping map[string]int) TableMapping {
-	return TableMapping{
-		TableName:   "oc_product_special",
-		ColumnOrder: []string{"product_id", "customer_group_id", "priority", "price", "date_start", "date_end"},
-		Fields: []FieldMapping{
-			{"Model", "product_id", func(sku string, _ string) interface{} {
-				return strconv.Itoa(productIdMapping[sku])
-			}},
-			{"", "customer_group_id", func(_ string, _ string) interface{} { return "2" }}, // Always 2 for Trade group
-			{"", "priority", func(_ string, _ string) interface{} { return "0" }},
-			{"Price (Trade)", "price", func(value string, _ string) interface{} { return GetTradePrice(value, value) }},
-			{"", "date_start", func(_ string, _ string) interface{} { return "0000-00-00" }}, // Always active start date
-			{"", "date_end", func(_ string, _ string) interface{} { return "0000-00-00" }},   // Always active end date
-		},
+func GetProductIdTransformation(productIdMapping map[string]int) func(entity Entity) interface{} {
+	return func(entity Entity) interface{} {
+		model := entity.GetValue("Model").(string)
+		if id, exists := productIdMapping[model]; exists {
+			return strconv.Itoa(id)
+		}
+		return nil
 	}
 }

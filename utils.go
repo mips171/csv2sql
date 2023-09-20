@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -36,8 +37,16 @@ func GetDateAdded() string {
 	return dateAdded
 }
 
-func DoNothing() func(string, string) interface{} {
-	return func(value string, _ string) interface{} { return TransformIdentity(value) }
+func DoNothing(fieldName string) func(Entity) interface{} {
+	return func(entity Entity) interface{} {
+		return entity.GetValue(fieldName)
+	}
+}
+
+func ReturnEmptyString() func(Entity) interface{} {
+	return func(_ Entity) interface{} {
+		return ""
+	}
 }
 
 func GetFirstName(value string, email string) interface{} {
@@ -77,11 +86,20 @@ func MapBrandToManufacturerID(brand string, nothing string) interface{} {
 	return "1"
 }
 
-func MapProductStatus(approved string, nothing string) interface{} {
-	return "1"
+func MapProductStatus(entity Entity) interface{} {
+	approved, _ := entity.GetValue("Status").(string)
+	fmt.Println(approved)
+
+	if approved == "y" {
+		return "1"
+	}
+
+	return "0"
 }
 
-func MapImageFilePath(sku string, email string) interface{} {
+func MapImageFilePath(entity Entity) interface{} {
+	sku := entity.GetValue("Model").(string)
+
 	// Define the base path where the images will be stored
 	basePath := "catalog/images/products/"
 

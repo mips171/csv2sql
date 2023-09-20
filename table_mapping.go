@@ -1,9 +1,12 @@
 package main
 
+type Entity interface {
+	GetValue(fieldName string) interface{}
+}
 type FieldMapping struct {
-	CsvFieldName   string
-	DbColumnName   string
-	Transformation func(string, string) interface{}
+	CSVColumnName   string
+	DBColumnName    string
+	MappingFunction func(Entity) interface{}
 }
 
 type TableMapping struct {
