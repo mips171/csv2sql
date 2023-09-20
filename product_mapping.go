@@ -137,7 +137,7 @@ func GetProductMapping() TableMapping {
 			{"Length", "length", DoNothing("Length")},
 			{"Width", "width", DoNothing("Width")},
 			{"Height", "height", DoNothing("Height")},
-			{"", "length_class_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Centimeter"
+			{"", "length_class_id", func(entity Entity) interface{} { return "4" }}, // Always 4 for "Meter"
 			{"", "subtract", func(entity Entity) interface{} { return "1" }},        // Always 1 for "Yes"
 			{"", "minimum", func(entity Entity) interface{} { return "1" }},         // Always 1 for "Yes"
 			{"", "sort_order", func(entity Entity) interface{} { return "1" }},      // Always 1 for "Yes"
