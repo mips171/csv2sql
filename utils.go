@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func GetUserGroupID(groupName string) string {
+func GetUserGroupID(groupName string) interface{} {
 	switch groupName {
 	case "Retail":
 		return "1"
@@ -17,14 +17,14 @@ func GetUserGroupID(groupName string) string {
 	}
 }
 
-func GetNewsletterStatus(subscriberStatus string) string {
+func GetNewsletterStatus(subscriberStatus string) interface{} {
 	if subscriberStatus == "y" {
 		return "1"
 	}
 	return "0"
 }
 
-func GetStatus(activeStatus string) string {
+func GetStatus(activeStatus string) interface{} {
 	if activeStatus == "y" {
 		return "1"
 	}
@@ -36,11 +36,11 @@ func GetDateAdded() string {
 	return dateAdded
 }
 
-func DoNothing() func(string, string) string {
-	return func(value string, _ string) string { return TransformIdentity(value) }
+func DoNothing() func(string, string) interface{} {
+	return func(value string, _ string) interface{} { return TransformIdentity(value) }
 }
 
-func GetFirstName(value string, email string) string {
+func GetFirstName(value string, email string) interface{} {
 	if value != "" {
 		return value
 	}
@@ -51,7 +51,7 @@ func GetFirstName(value string, email string) string {
 	return "firstname"
 }
 
-func GetLastName(value string, email string) string {
+func GetLastName(value string, email string) interface{} {
 	if value != "" {
 		return value
 	}
@@ -65,7 +65,7 @@ func GetLastName(value string, email string) string {
 	return "surname"
 }
 
-func MapBrandToManufacturerID(brand string, nothing string) string {
+func MapBrandToManufacturerID(brand string, nothing string) interface{} {
 	// Example: map brand names to manufacturer IDs
 	// brandToID := map[string]string{
 	// 	"Brand1": "1",
@@ -77,7 +77,11 @@ func MapBrandToManufacturerID(brand string, nothing string) string {
 	return "1"
 }
 
-func MapImageFilePath(sku string, email string) string {
+func MapProductStatus(approved string, nothing string) interface{} {
+	return "1"
+}
+
+func MapImageFilePath(sku string, email string) interface{} {
 	// Define the base path where the images will be stored
 	basePath := "catalog/images/products/"
 

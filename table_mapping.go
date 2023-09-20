@@ -3,7 +3,7 @@ package main
 type FieldMapping struct {
 	CsvFieldName   string
 	DbColumnName   string
-	Transformation func(string, string) string
+	Transformation func(string, string) interface{}
 }
 
 type TableMapping struct {

@@ -8,10 +8,17 @@ import (
 )
 
 func main() {
+
+	products()
+
+	fmt.Println("SQL file has been generated successfully.")
+}
+
+func products() {
 	productMapping := GetProductMapping()
 
 	// Open the file
-	file, err := os.OpenFile("./data/product_cleaned.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile("./data/product_cleaned_short.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -41,9 +48,8 @@ func main() {
 		productIdMapping[product.Model] = index + 1
 	}
 
-	fmt.Print(records[0]["TaxClassId"])
-
 	// Generate product statements
+	sqlFile.WriteString("TRUNCATE TABLE `" + productMapping.TableName + "`;\n")
 	productInsertStatements := GenerateInsertStatement(productMapping.TableName, productMapping.ColumnOrder, records, productMapping.Fields, "Model", productIdMapping)
 	for _, stmt := range productInsertStatements {
 		sqlFile.WriteString(stmt + "\n")
@@ -52,6 +58,7 @@ func main() {
 	// Generate description statements
 	var descriptionRecords []map[string]string
 	descriptionMapping := GetProductDescriptionMapping(productIdMapping)
+	sqlFile.WriteString("TRUNCATE TABLE `" + descriptionMapping.TableName + "`;\n")
 	for _, product := range products {
 		descriptionRecords = append(descriptionRecords, productToMap(product))
 	}
@@ -60,16 +67,37 @@ func main() {
 		sqlFile.WriteString(stmt + "\n")
 	}
 
-	// // Generate trade price statements
-	// var tradePriceRecords []map[string]string
-	// tradePriceMapping := GetProductSpecialMapping(productIdMapping)
-	// for _, product := range products {
-	// 	tradePriceRecords = append(tradePriceRecords, productToMap(product))
-	// }
-	// tradePriceInsertStatements := GenerateInsertStatement(tradePriceMapping.TableName, tradePriceMapping.ColumnOrder, tradePriceRecords, tradePriceMapping.Fields, "Model", productIdMapping)
-	// for _, stmt := range tradePriceInsertStatements {
-	// 	sqlFile.WriteString(stmt + "\n")
-	// }
+	// Generate trade price statements
+	var tradePriceRecords []map[string]string
+	tradePriceMapping := GetProductSpecialMapping(productIdMapping)
+	sqlFile.WriteString("TRUNCATE TABLE `" + tradePriceMapping.TableName + "`;\n")
+	for _, product := range products {
+		tradePriceRecords = append(tradePriceRecords, productToMap(product))
+	}
+	tradePriceInsertStatements := GenerateInsertStatement(tradePriceMapping.TableName, tradePriceMapping.ColumnOrder, tradePriceRecords, tradePriceMapping.Fields, "Model", productIdMapping)
+	for _, stmt := range tradePriceInsertStatements {
+		sqlFile.WriteString(stmt + "\n")
+	}
 
-	fmt.Println("SQL file has been generated successfully.")
+	var productToStoreRecords []map[string]string
+	productToStoreMapping := GetProductToStoreMapping(productIdMapping)
+	sqlFile.WriteString("TRUNCATE TABLE `" + productToStoreMapping.TableName + "`;\n")
+	for _, product := range products {
+		productToStoreRecords = append(productToStoreRecords, productToMap(product))
+	}
+	productToStoreInsertStatements := GenerateInsertStatement(productToStoreMapping.TableName, productToStoreMapping.ColumnOrder, productToStoreRecords, productToStoreMapping.Fields, "Model", productIdMapping)
+	for _, stmt := range productToStoreInsertStatements {
+		sqlFile.WriteString(stmt + "\n")
+	}
+
+	var productToCostRecords []map[string]string
+	productToCostMapping := GetProductToCostMapping(productIdMapping)
+	sqlFile.WriteString("TRUNCATE TABLE `" + productToCostMapping.TableName + "`;\n")
+	for _, product := range products {
+		productToCostRecords = append(productToCostRecords, productToMap(product))
+	}
+	productToCostInsertStatements := GenerateInsertStatement(productToCostMapping.TableName, productToCostMapping.ColumnOrder, productToCostRecords, productToCostMapping.Fields, "Model", productIdMapping)
+	for _, stmt := range productToCostInsertStatements {
+		sqlFile.WriteString(stmt + "\n")
+	}
 }

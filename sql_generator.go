@@ -17,19 +17,26 @@ func GenerateInsertStatement(tableName string, columnOrder []string, records []m
 	for _, record := range records {
 		var rowValues []string
 
-		// If a uniqueIdMapping is provided, use it.
-		if uniqueIdMapping != nil {
-			if id, ok := uniqueIdMapping[record[uniqueIdentifier]]; ok {
-				rowValues = append(rowValues, fmt.Sprintf("%d", id))
-			} else {
-				continue // Skip the record if no unique ID is found
-			}
-		}
+		// // If a uniqueIdMapping is provided, use it.
+		// if uniqueIdMapping != nil {
+		// 	if id, ok := uniqueIdMapping[record[uniqueIdentifier]]; ok {
+		// 		rowValues = append(rowValues, fmt.Sprintf("%d", id))
+		// 	} else {
+		// 		continue // Skip the record if no unique ID is found
+		// 	}
+		// }
 
 		for _, col := range columnOrder {
 			if field, exists := fieldMap[col]; exists {
 				value := field.Transformation(record[field.CsvFieldName], record[uniqueIdentifier])
-				rowValues = append(rowValues, fmt.Sprintf("'%s'", strings.ReplaceAll(value, "'", "''")))
+				switch v := value.(type) {
+				case string:
+					rowValues = append(rowValues, fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")))
+				case int:
+					rowValues = append(rowValues, fmt.Sprintf("%d", v))
+				default:
+					// Handle other types or raise an error if needed
+				}
 			} else {
 				rowValues = append(rowValues, "NULL") // Handle fields not present in the CSV
 			}
@@ -40,7 +47,7 @@ func GenerateInsertStatement(tableName string, columnOrder []string, records []m
 			backtickedColumns[i] = fmt.Sprintf("`%s`", col)
 		}
 
-		statement := fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s);", tableName, strings.Join(backtickedColumns, ", "), strings.Join(rowValues, ", "))
+		statement := fmt.Sprintf("INSERT IGNORE INTO `%s` (%s) VALUES (%s);", tableName, strings.Join(backtickedColumns, ", "), strings.Join(rowValues, ", "))
 		statements = append(statements, statement)
 	}
 
