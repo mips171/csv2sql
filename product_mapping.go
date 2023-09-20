@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// This entityrecord struct maps from CSV to a struct
 type ProductRecord struct {
 	Model              string `csv:"SKU*"`
 	Name               string `csv:"Name"`
@@ -27,6 +28,7 @@ type ProductRecord struct {
 	// Add other fields as required
 }
 
+// Implement the Entity interface for ProductRecord
 func (p ProductRecord) GetValue(fieldName string) interface{} {
 	switch fieldName {
 	case "Model":
@@ -71,6 +73,7 @@ func (p ProductRecord) GetValue(fieldName string) interface{} {
 	}
 }
 
+// This function maps from a ProductRecord to a map of strings
 func productToMap(product ProductRecord) map[string]string {
 	return map[string]string{
 		"Model":              product.Model,
@@ -96,12 +99,7 @@ func productToMap(product ProductRecord) map[string]string {
 	}
 }
 
-// INSERT INTO `oc_product` (`model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`,
-// `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`,
-// `weight`, `weight_class_id`, `length`, `width`, `height`,  `length_class_id`,
-// `subtract`, `minimum`, `sort_order`, `status`, `viewed`,
-//`date_added`, `date_modified`) VALUES ('1', 'TESTPRODUCT', '', '', '', '', '', '', '', '0', '6', '', '0', '1', '0.0000', '0', '0', '2023-09-19', '0.00000000', '1', '0.00000000', '0.00000000', '0.00000000', '1', '1', '1', '1', '1', '0', '2023-09-19 14:05:23', '2023-09-19 14:05:23');
-
+// Map out our actual SQL for Product
 func GetProductMapping() TableMapping {
 	return TableMapping{
 		TableName: "oc_product",
@@ -145,6 +143,7 @@ func GetProductMapping() TableMapping {
 	}
 }
 
+// Map out our actual SQL for ProductDescription
 func GetProductDescriptionMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_product_description",
@@ -162,6 +161,7 @@ func GetProductDescriptionMapping(productIdMapping map[string]int) TableMapping 
 	}
 }
 
+// Map out our actual SQL for ProductToCategory
 func GetProductRelatedMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_product_related",
@@ -183,6 +183,7 @@ func GetProductRelatedMapping() TableMapping {
 // 	}
 // }
 
+// Map out our actual SQL for ProductSpecial
 func GetProductSpecialMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_product_special",
@@ -201,8 +202,7 @@ func GetProductSpecialMapping(productIdMapping map[string]int) TableMapping {
 	}
 }
 
-// INSERT INTO `oc_product_cost` (`product_cost_id`, `product_id`, `supplier_id`, `cost`, `cost_amount`, `cost_percentage`, `cost_additional`, `costing_method`)
-// VALUES ('4', '1', '0', '0.0000', '0.0000', '0.00', '0.0000', '0');
+// Map out our actual SQL for ProductCost
 func GetProductToCostMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_product_cost",
@@ -219,8 +219,7 @@ func GetProductToCostMapping(productIdMapping map[string]int) TableMapping {
 	}
 }
 
-// need product cost
-// INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES ('5', '0');
+// Map out our actual SQL for ProductToStore
 func GetProductToStoreMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_product_to_store",
