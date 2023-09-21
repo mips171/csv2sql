@@ -48,6 +48,16 @@ func ReturnEmptyString() func(Entity) interface{} {
 	}
 }
 
+func ToUpperCase(fieldName string) func(Entity) interface{} {
+	return func(entity Entity) interface{} {
+		value := entity.GetValue(fieldName)
+		if strValue, ok := value.(string); ok {
+			return strings.ToUpper(strValue)
+		}
+		return value // If it's not a string, return the value unchanged
+	}
+}
+
 func GetFirstName(value string, email string) interface{} {
 	if value != "" {
 		return value

@@ -89,7 +89,7 @@ func products() {
 	// Use the helper function for each mapping
 	processTable(productMapping, entities, productIdMapping, sqlFile)
 	processTable(GetProductDescriptionMapping(productIdMapping), entities, productIdMapping, sqlFile)
-	processTable(GetProductSpecialMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetProductDiscountMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToStoreMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToCostMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToCategoryMapping(productIdMapping), entities, productIdMapping, sqlFile)

@@ -120,8 +120,8 @@ func GetProductMapping() TableMapping {
 			"subtract", "minimum", "sort_order", "status", "viewed",
 			"date_added", "date_modified"},
 		Fields: []FieldMapping{
-			{"Model", "model", DoNothing("Model")},
-			{"Model", "sku", DoNothing("Model")},
+			{"Model", "model", ToUpperCase("Model")},
+			{"Model", "sku", ToUpperCase("Model")},
 			{"", "upc", ReturnEmptyString()},
 			{"", "ean", ReturnEmptyString()},
 			{"", "jan", ReturnEmptyString()},
@@ -185,16 +185,17 @@ func GetProductRelatedMapping() TableMapping {
 }
 
 // Map out our actual SQL for ProductSpecial
-func GetProductSpecialMapping(productIdMapping map[string]int) TableMapping {
+func GetProductDiscountMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
-		TableName:   "oc_product_special",
-		ColumnOrder: []string{"product_id", "customer_group_id", "priority", "price", "date_start", "date_end"},
+		TableName:   "oc_product_discount",
+		ColumnOrder: []string{"product_id", "customer_group_id", "quantity", "priority", "price", "date_start", "date_end"},
 		Fields: []FieldMapping{
 			{"Model", "product_id", func(entity Entity) interface{} {
 				sku := entity.GetValue("Model").(string)
 				return strconv.Itoa(productIdMapping[sku])
 			}},
 			{"", "customer_group_id", func(entity Entity) interface{} { return "2" }}, // Always 2 for Trade group
+			{"", "quantity", func(entity Entity) interface{} { return "1" }},          // at least 1 or more
 			{"", "priority", func(entity Entity) interface{} { return "0" }},
 			{"TradePrice", "price", GetTradePrice},
 			{"", "date_start", func(entity Entity) interface{} { return "0000-00-00" }}, // Always active start date
