@@ -10,8 +10,45 @@ import (
 func main() {
 
 	products()
+	categories()
 
 	fmt.Println("SQL file has been generated successfully.")
+}
+
+func categories() {
+
+	// Open the file
+	file, err := os.OpenFile("./data/product_cleaned.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// Decode the CSV data
+	var cats []CategoryRecord
+	if err := gocsv.UnmarshalFile(file, &cats); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	sqlFile, err := os.Create("./data/import_categories.sql")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer sqlFile.Close()
+
+	sqlFile.WriteString("TRUNCATE TABLE `oc_category`;\n")
+	sqlFile.WriteString("TRUNCATE TABLE `oc_category_description`;\n")
+	sqlFile.WriteString("TRUNCATE TABLE `oc_category_path`;\n")
+	sqlFile.WriteString("TRUNCATE TABLE `oc_category_to_store`;\n")
+
+	for _, category := range cats {
+		for _, stmt := range GenerateCategorySQLStatements(category) {
+			sqlFile.WriteString(stmt + "\n")
+		}
+	}
 }
 
 func products() {
@@ -55,6 +92,7 @@ func products() {
 	processTable(GetProductSpecialMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToStoreMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToCostMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetProductToCategoryMapping(productIdMapping), entities, productIdMapping, sqlFile)
 }
 
 func processTable(tableMapping TableMapping, entities []Entity, productIdMapping map[string]int, sqlFile *os.File) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -27,6 +28,7 @@ type ProductRecord struct {
 	Status             string `csv:"Approved"`
 	UpSellProducts     string `csv:"Upsell Products"`
 	CrossSellProducts  string `csv:"Cross-Sell Products"`
+	Category           string `csv:"Category"` // accessed by category mapping
 	// Add other fields as required
 }
 
@@ -73,6 +75,8 @@ func (p ProductRecord) GetValue(fieldName string) interface{} {
 		return p.UpSellProducts
 	case "CrossSellProducts":
 		return p.CrossSellProducts
+	case "Category":
+		return p.Category
 	// Add other fields as required
 	default:
 		return nil
@@ -102,6 +106,7 @@ func productToMap(product ProductRecord) map[string]string {
 		"DateAdded":          product.DateAdded,
 		"DateModified":       product.DateModified,
 		"Image":              product.Model,
+		"Category":           product.Category,
 	}
 }
 
@@ -167,7 +172,7 @@ func GetProductDescriptionMapping(productIdMapping map[string]int) TableMapping 
 	}
 }
 
-// Map out our actual SQL for ProductToCategory
+// Map out our actual SQL for ProductToRelated
 func GetProductRelatedMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_product_related",
@@ -178,16 +183,6 @@ func GetProductRelatedMapping() TableMapping {
 		},
 	}
 }
-
-// func GetProductToCategoryMapping() TableMapping {
-// 	return TableMapping{
-// 		TableName:   "oc_product_to_category",
-// 		ColumnOrder: []string{"product_id", "category_id"},
-// 		Fields: []FieldMapping{
-// 			{"Category", "category_id", MapCategoryToCategoryId},
-// 		},
-// 	}
-// }
 
 // Map out our actual SQL for ProductSpecial
 func GetProductSpecialMapping(productIdMapping map[string]int) TableMapping {
@@ -237,21 +232,7 @@ func GetProductToStoreMapping(productIdMapping map[string]int) TableMapping {
 	}
 }
 
-var (
-	categoryIDCounter       = 1
-	categoryToCategoryIdMap = make(map[string]string)
-)
-
-func MapCategoryToCategoryId(categoryName string, nothing string) interface{} {
-	if categoryId, ok := categoryToCategoryIdMap[categoryName]; ok {
-		return categoryId
-	}
-	// Generate a new category_id and store the mapping
-	categoryToCategoryIdMap[categoryName] = strconv.Itoa(categoryIDCounter)
-	categoryIDCounter++
-	return categoryToCategoryIdMap[categoryName]
-}
-
+// Create and maintain a map of SKU to product_id
 var (
 	skuToProductIdMap = make(map[string]int)
 	productIDCounter  = 1
@@ -354,4 +335,24 @@ func GetProductIdTransformation(productIdMapping map[string]int) func(entity Ent
 		}
 		return nil
 	}
+}
+
+func GetCategoryId(productCategory string) int {
+	return categoryToCategoryIdMap[productCategory]
+}
+
+func GenerateProductToCategorySQLStatements(product ProductRecord) []string {
+	// Parse the product's category.
+	categoryName := product.Category
+
+	// Get the corresponding category ID.
+	categoryID := GetCategoryId(categoryName)
+	productID := MapSkuToProductId(product)
+
+	var statements []string
+
+	// Create the SQL statement linking the product to the category.
+	statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES (%d, %d);", productID, categoryID))
+
+	return statements
 }
