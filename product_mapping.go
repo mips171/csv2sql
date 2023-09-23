@@ -233,6 +233,13 @@ func GetProductToStoreMapping(productIdMapping map[string]int) TableMapping {
 	}
 }
 
+// INSERT INTO `oc_product_attribute` (`product_id`, `attribute_id`, `language_id`, `text`) VALUES
+// (43, 2, 1, '1'),
+// (47, 4, 1, '16GB'),
+// (43, 4, 1, '8gb'),
+// (42, 3, 1, '100mhz'),
+// (47, 2, 1, '4');
+
 // Create and maintain a map of SKU to product_id
 var (
 	skuToProductIdMap = make(map[string]int)
