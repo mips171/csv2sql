@@ -11,6 +11,7 @@ func main() {
 
 	products()
 	categories()
+	orders()
 
 	fmt.Println("SQL file has been generated successfully.")
 }
@@ -50,6 +51,79 @@ func categories() {
 		}
 	}
 }
+
+func orders() {
+	orderMapping := GetOrderMapping()
+
+	// Open the ordersFile
+	ordersFile, err := os.OpenFile("./data/orders_export_full_20230921_210540_36657.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer ordersFile.Close()
+
+	// Decode the CSV data
+	var orders []OrderRecord
+	if err := gocsv.UnmarshalFile(ordersFile, &orders); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// fmt.Println(orders[:5])  // print the first 5 orders to check
+
+
+	sqlFile, err := os.Create("./data/import_orders.sql")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer sqlFile.Close()
+
+	orderIDMapping := make(map[string]int)
+	for index, order := range orders {
+		orderIDMapping[order.OrderID] = index + 1
+	}
+
+	entities := make([]Entity, len(orders))
+	for i, v := range orders {
+		entities[i] = v
+	}
+
+	// Open the product CSV file
+	productFile, err := os.OpenFile("./data/products_export_full_20230815_210049_71306.csv", os.O_RDWR, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer productFile.Close()
+
+	// Decode the product data from CSV
+	var products []ProductRecord
+	if err := gocsv.UnmarshalFile(productFile, &products); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// fmt.Println(products[:5])  // print the first 5 products to check
+
+
+	productIdMapping := make(map[string]int)
+	for index, product := range products {
+		productIdMapping[product.Model] = index + 1
+	}
+
+	for sku, id := range productIdMapping {
+		fmt.Printf("SKU: %s, ID: %d\n", sku, id)
+	}
+
+
+	// Use the helper function for each mapping
+	processTable(orderMapping, entities, orderIDMapping, sqlFile)
+	processTable(GetOrderProductMapping(orderIDMapping, productIdMapping), entities, orderIDMapping, sqlFile)
+	// processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
+}
+
 
 func products() {
 	productMapping := GetProductMapping()
