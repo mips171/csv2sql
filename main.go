@@ -138,15 +138,12 @@ func orders() {
 	sqlFile.WriteString("TRUNCATE TABLE `oc_order_total`;\n")
 
 	// processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
-	for _, record := range orders { // assuming orderRecords is a slice of OrderRecord
+	for _, record := range orders {
 		orderID := record.OrderID
 		subTotalValue, shippingCost, taxValue, totalValue := CalculateOrderTotals(record)
 
-		sqlStatements := GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue)
-
-		for _, stmt := range sqlStatements {
-			sqlFile.WriteString(stmt + "\n")
-		}
+		sqlStatement := GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue)
+		sqlFile.WriteString(sqlStatement + "\n")
 	}
 
 }
