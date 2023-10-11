@@ -44,10 +44,12 @@ type OrderRecord struct {
 	CurrencyCode         string `csv:"Currency Code"`
 	DateAdded            string `csv:"Date Placed"`
 	DateModified         string `csv:"Date Invoiced"`
+	OrderLineTaxFree     string `csv:"Order Line Tax Free"`
 	OrderLineSKU         string `csv:"Order Line SKU"`
 	OrderLineQty         string `csv:"Order Line Qty"`
 	OrderLineDescription string `csv:"Order Line Description"`
 	OrderLineUnitPrice   string `csv:"Order Line Unit Price"`
+	AmountPaid           string `csv:"Amount Paid"`
 	// Add any other relevant fields as needed.
 }
 
@@ -248,43 +250,43 @@ func MapSKUToProductID(productIdMapping map[string]int) func(entity Entity) inte
 
 // These are placeholder functions, you'd have to implement logic to calculate these.
 func CalculateTotal(entity Entity) interface{} {
-    priceStr := entity.GetValue("OrderLineUnitPrice").(string)
-    qtyStr := entity.GetValue("OrderLineQty").(string)
+	priceStr := entity.GetValue("OrderLineUnitPrice").(string)
+	qtyStr := entity.GetValue("OrderLineQty").(string)
 
-    // Convert the string values to float64 and int respectively
-    price, err1 := strconv.ParseFloat(priceStr, 64)
-    qty, err2 := strconv.Atoi(qtyStr)
+	// Convert the string values to float64 and int respectively
+	price, err1 := strconv.ParseFloat(priceStr, 64)
+	qty, err2 := strconv.Atoi(qtyStr)
 
-    // Handle potential conversion errors
-    if err1 != nil || err2 != nil {
-        fmt.Printf("Error converting price or quantity to number: %v, %v\n", err1, err2)
+	// Handle potential conversion errors
+	if err1 != nil || err2 != nil {
+		fmt.Printf("Error converting price or quantity to number: %v, %v\n", err1, err2)
 		panic("Error converting price or quantity to number")
 	}
 
-    total := price * float64(qty)
+	total := price * float64(qty)
 
-    // Convert total to string with 4 decimal places
-    return fmt.Sprintf("%.4f", total)
+	// Convert total to string with 4 decimal places
+	return fmt.Sprintf("%.4f", total)
 }
 
 func CalculateTax(entity Entity) interface{} {
-    // Retrieve the price as a string
-    priceStr := entity.GetValue("OrderLineUnitPrice").(string)
+	// Retrieve the price as a string
+	priceStr := entity.GetValue("OrderLineUnitPrice").(string)
 
-    // Convert the string to float64
-    price, err := strconv.ParseFloat(priceStr, 64)
+	// Convert the string to float64
+	price, err := strconv.ParseFloat(priceStr, 64)
 
-    // Handle potential conversion errors
-    if err != nil {
-        fmt.Printf("Error converting price to number: %v\n", err)
-        return "ERROR"  // or handle this more gracefully, depending on your needs
-    }
+	// Handle potential conversion errors
+	if err != nil {
+		fmt.Printf("Error converting price to number: %v\n", err)
+		return "ERROR" // or handle this more gracefully, depending on your needs
+	}
 
-    // Calculate the tax (10% in this example)
-    tax := price * 0.1
+	// Calculate the tax (10% in this example)
+	tax := price * 0.1
 
-    // Convert tax to string with 4 decimal places
-    return fmt.Sprintf("%.4f", tax)
+	// Convert tax to string with 4 decimal places
+	return fmt.Sprintf("%.4f", tax)
 }
 
 func CalculateReward(entity Entity) interface{} {
@@ -298,13 +300,71 @@ func GetOrderTotalMapping(orderIDMapping map[string]int) TableMapping {
 		ColumnOrder: []string{"order_id", "code", "title", "value", "sort_order"},
 		Fields: []FieldMapping{
 			{"OrderID", "order_id", MapOrderID(orderIDMapping)},
-			// Assuming we can derive 'code' and 'title' from the CSV's "Amount Paid" field
 			{"AmountPaid", "code", MapTotalCode},
-			{"AmountPaid", "title", func(entity Entity) interface{} { return "IMPORT" }},
-			{"AmountPaid", "value", DoNothing("AmountPaid")},
+			{"AmountPaid", "title", MapTotalTitle},
+			{"AmountPaid", "value", CalculateTotalValue},
+			{"AmountPaid", "sort_order", MapSortOrder},
 			//... Additional fields as required from your CSV
 		},
 	}
+}
+
+func MapTotalTitle(entity Entity) interface{} {
+	return "Total"
+}
+
+func safeToFloat(value interface{}) float64 {
+	switch v := value.(type) {
+	case float64:
+		return v
+	case string:
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			return f
+		}
+		fmt.Printf("Warning: Unable to convert string %s to float. Using 0.0 as default.\n", v)
+	default:
+		fmt.Printf("Warning: Unexpected type %T (%v). Using 0.0 as default.\n", v, v)
+	}
+	return 0.0
+}
+
+func CalculateTotalValue(entity Entity) interface{} {
+	taxRate := 0.1
+	if entity.GetValue("OrderLineTaxFree") == "y" {
+		taxRate = 0.0
+	}
+
+	// Calculate sub-total for the line item
+	price := safeToFloat(entity.GetValue("OrderLineUnitPrice"))
+	quantity := safeToFloat(entity.GetValue("OrderLineQty"))
+	subTotalValue := price * quantity
+
+	// Add ShippingCost to the sub-total
+	shippingCost := safeToFloat(entity.GetValue("ShippingCost"))
+	subTotalValue += shippingCost
+
+	// Calculate tax on the sub-total
+	taxValue := subTotalValue * taxRate
+
+	totalValue := subTotalValue + taxValue
+
+	// Debugging output
+	fmt.Printf("OrderID: %v, ShippingCost: %f, SubTotal: %f, TaxValue: %f, TotalValue: %f\n",
+		entity.GetValue("OrderID"), shippingCost, subTotalValue, taxValue, totalValue)
+
+	return fmt.Sprintf("%.4f", totalValue)
+}
+
+func MapTitle(entity Entity) interface{} {
+	code := entity.GetValue("AmountPaid").(string) // Assumes AmountPaid is a string
+	if code == "total" {
+		return "Total"
+	} else if code == "sub_total" {
+		return "Sub-Total"
+	} else if code == "shipping" {
+		return "Shipping"
+	} // add more cases as necessary
+	return "Unknown"
 }
 
 func MapOrderID(orderIDMapping map[string]int) MappingFunction {

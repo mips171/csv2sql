@@ -56,7 +56,7 @@ func orders() {
 	orderMapping := GetOrderMapping()
 
 	// Open the ordersFile
-	ordersFile, err := os.OpenFile("./data/orders_export_full_20230921_210540_36657.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	ordersFile, err := os.OpenFile("./data/orders_short.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -69,9 +69,6 @@ func orders() {
 		fmt.Println("Error:", err)
 		return
 	}
-
-	// fmt.Println(orders[:5])  // print the first 5 orders to check
-
 
 	sqlFile, err := os.Create("./data/import_orders.sql")
 	if err != nil {
@@ -105,23 +102,17 @@ func orders() {
 		return
 	}
 
-	// fmt.Println(products[:5])  // print the first 5 products to check
-
-
 	productIdMapping := make(map[string]int)
 	for index, product := range products {
 		productIdMapping[product.Model] = index + 1
-	}
-
-	for sku, id := range productIdMapping {
-		fmt.Printf("SKU: %s, ID: %d\n", sku, id)
 	}
 
 
 	// Use the helper function for each mapping
 	processTable(orderMapping, entities, orderIDMapping, sqlFile)
 	processTable(GetOrderProductMapping(orderIDMapping, productIdMapping), entities, orderIDMapping, sqlFile)
-	// processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
+
+	processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
 }
 
 
