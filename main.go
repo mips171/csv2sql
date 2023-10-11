@@ -55,7 +55,7 @@ func categories() {
 func orders() {
 
 	// Open the ordersFile
-	ordersFile, err := os.OpenFile("./data/orders_short.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	ordersFile, err := os.OpenFile("./data/orders_export_full_20230921_210540_36657.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -134,6 +134,8 @@ func orders() {
 	// Use the helper function for each mapping
 	processTable(orderMapping, entities, orderIDMapping, sqlFile)
 	processTable(GetOrderProductMapping(orderIDMapping, productIdMapping), entities, orderIDMapping, sqlFile)
+
+	sqlFile.WriteString("TRUNCATE TABLE `oc_order_total`;\n")
 
 	// processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
 	for _, record := range orders { // assuming orderRecords is a slice of OrderRecord
