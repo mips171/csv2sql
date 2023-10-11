@@ -178,7 +178,7 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"ShippingCode", "shipping_code", func(Entity) interface{} { return "Default shipping." }}, // TODO: change this to a mapping function
 			{"Comment", "comment", JustUse("Comment")},
 			{"Total", "total", JustUse("Total")},
-			{"OrderStatusID", "order_status_id", MapOrderStatusID},
+			{"OrderStatus", "order_status_id", MapOrderStatusID},
 			{"DateAdded", "date_added", JustUse("DateAdded")},
 			{"DateModified", "date_modified", JustUse("DateModified")},
 			{"", "currency_id",	func(entity Entity) interface{} { return "4" }}, // Default currency ID for AUD
@@ -297,16 +297,17 @@ func CalculateReward(entity Entity) interface{} {
 	return "0.0000" // Assuming no reward
 }
 
-func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) []string {
-	statements := []string{
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%.4f', 1);", orderID, subTotalValue-shippingCost),
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%.4f', 3);", orderID, shippingCost),
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%.4f', 6);", orderID, totalValue),
-	}
+func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) string {
+	var valueEntries []string
+
+	valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'sub_total', 'Sub-Total', '%.4f', 1)", orderID, subTotalValue-shippingCost))
+	valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'shipping', 'Shipping', '%.4f', 3)", orderID, shippingCost))
+	valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'total', 'Total', '%.4f', 6)", orderID, totalValue))
 	if taxValue > 0 {
-		statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'VAT', '%.4f', 5);", orderID, taxValue))
+		valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'tax', 'VAT', '%.4f', 5)", orderID, taxValue))
 	}
-	return statements
+
+	return fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES\n%s;", strings.Join(valueEntries, ",\n"))
 }
 
 func MapTotalTitle(entity Entity) interface{} {
@@ -425,7 +426,7 @@ func MapCustomerGroupID(entity Entity) interface{} {
 }
 
 func MapOrderStatusID(entity Entity) interface{} {
-	status, _ := entity.GetValue("OrderStatusID").(string)
+	status, _ := entity.GetValue("OrderStatus").(string)
 	statusMap := map[string]string{
 		"Dispatched":     "3",
 		"Cancelled":      "7",
