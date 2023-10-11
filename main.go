@@ -53,7 +53,6 @@ func categories() {
 }
 
 func orders() {
-	orderMapping := GetOrderMapping()
 
 	// Open the ordersFile
 	ordersFile, err := os.OpenFile("./data/orders_short.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
@@ -107,6 +106,30 @@ func orders() {
 		productIdMapping[product.Model] = index + 1
 	}
 
+	// map customer email to ID
+	// Open the product CSV file
+	customersFile, err := os.OpenFile("./data/customer_export_full_20230815_111641_53870.csv", os.O_RDWR, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer customersFile.Close()
+
+	// Decode the product data from CSV
+	var customers []CustomerRecord
+	if err := gocsv.UnmarshalFile(customersFile, &customers); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	customerIdMapping := make(map[string]int)
+	for index, cust := range customers {
+		customerIdMapping[cust.Email] = index + 1
+	}
+
+
+	orderMapping := GetOrderMapping(customerIdMapping)
+
 
 	// Use the helper function for each mapping
 	processTable(orderMapping, entities, orderIDMapping, sqlFile)
@@ -125,7 +148,6 @@ func orders() {
 	}
 
 }
-
 
 func products() {
 	productMapping := GetProductMapping()

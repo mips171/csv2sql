@@ -1,7 +1,7 @@
 package main
 
 type CustomerRecord struct {
-	Email     string `csv:"Email"`
+	Email     string `csv:"Email Address"`
 	FirstName string `csv:"First Name"`
 	LastName  string `csv:"Last Name"`
 	Address   string `csv:"Address"`

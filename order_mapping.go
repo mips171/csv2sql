@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // CSV Headers, need to match OrderRecord deserialization
@@ -19,8 +20,9 @@ type OrderRecord struct {
 	Email                string `csv:"Email"`
 	Telephone            string `csv:"Ship Phone"`
 	Fax                  string `csv:"Ship Fax"`
-	PaymentFirstname     string `csv:"Bill First Name"`
-	PaymentLastname      string `csv:"Bill Last Name"`
+	Firstname            string `csv:"Bill First Name"`
+	Lastname             string `csv:"Bill Last Name"`
+	PaymentCompany       string `csv:"Bill Company"`
 	PaymentAddress1      string `csv:"Bill Address Line 1"`
 	PaymentAddress2      string `csv:"Bill Address Line 2"`
 	PaymentCity          string `csv:"Bill City"`
@@ -72,9 +74,11 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 	case "Fax":
 		return o.Fax
 	case "PaymentFirstname":
-		return o.PaymentFirstname
+		return o.Firstname
 	case "PaymentLastname":
-		return o.PaymentLastname
+		return o.Lastname
+	case "PaymentCompany":
+		return o.PaymentCompany
 	case "PaymentAddress1":
 		return o.PaymentAddress1
 	case "PaymentAddress2":
@@ -136,75 +140,50 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 }
 
 // Need to map to this schema
-// INSERT INTO `oc_order` (`order_id`, `invoice_no`, `invoice_prefix`, `store_id`, `store_name`, `store_url`, `customer_id`, `customer_group_id`, `firstname`, `lastname`, `email`, `telephone`, `fax`, `custom_field`, `payment_firstname`, `payment_lastname`, `payment_company`, `payment_address_1`, `payment_address_2`, `payment_city`, `payment_postcode`, `payment_country`, `payment_country_id`, `payment_zone`, `payment_zone_id`, `payment_address_format`, `payment_custom_field`, `payment_method`, `payment_code`, `shipping_firstname`, `shipping_lastname`, `shipping_company`, `shipping_address_1`, `shipping_address_2`, `shipping_city`, `shipping_postcode`, `shipping_country`, `shipping_country_id`, `shipping_zone`, `shipping_zone_id`, `shipping_address_format`, `shipping_custom_field`, `shipping_method`, `shipping_code`, `comment`, `total`, `order_status_id`, `affiliate_id`, `commission`, `marketing_id`, `tracking`, `language_id`, `currency_id`, `currency_code`, `currency_value`, `ip`, `forwarded_ip`, `user_agent`, `accept_language`, `date_added`, `date_modified`) VALUES ('2', '0', ”, '0', 'Telco Antennas', 'https://telcoshop.nbembedded.com/', '9', '0', 'Daryl', 'Sowinski', 'dsowinski@bigpond.com', '419653781', ”, ”, 'Daryl', 'Sowinski', ”, '37 Diamantina Street', ”, 'Hillcrest', '4118', 'Australia', '13', ”, '0', ”, ”, 'Direct Deposit (EFT)', 'cod', 'Daryl', 'Sowinski', ”, '37 Diamantina Street', ”, 'Hillcrest', '4118', 'Australia', '13', ”, '0', ”, ”, 'Default shipping.', ”, ”, '46.8900', '7', '0', '0.0000', '0', ”, '1', '0', 'AUD', '1.00000000', ”, ”, ”, ”, '2011-02-22 03:25:29', '2018-07-02 02:07:06');
+// INSERT INTO `oc_order` (`order_id`, `invoice_no`, `invoice_prefix`, `store_id`, `store_name`, `store_url`, `customer_id`, `customer_group_id`, `firstname`, `lastname`, `email`, `telephone`, `fax`, `custom_field`, `payment_firstname`, `payment_lastname`, `payment_company`, `payment_address_1`, `payment_address_2`, `payment_city`, `payment_postcode`, `payment_country`, `payment_country_id`, `payment_zone`, `payment_zone_id`, `payment_address_format`, `payment_custom_field`, `payment_method`, `payment_code`, `shipping_firstname`, `shipping_lastname`, `shipping_company`, `shipping_address_1`, `shipping_address_2`, `shipping_city`, `shipping_postcode`, `shipping_country`, `shipping_country_id`, `shipping_zone`, `shipping_zone_id`, `shipping_address_format`, `shipping_custom_field`, `shipping_method`, `shipping_code`, `comment`, `total`, `order_status_id`, `affiliate_id`, `commission`, `marketing_id`, `tracking`, `language_id`, `currency_id`, `currency_code`, `currency_value`, `ip`, `forwarded_ip`, `user_agent`, `accept_language`, `date_added`, `date_modified`);
 
-func GetOrderMapping() TableMapping {
+func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_order",
-		ColumnOrder: []string{"invoice_no", "invoice_prefix", "store_id", "store_name", "store_url", "customer_id", "customer_group_id", "firstname", "lastname", "email", "telephone", "fax", "custom_field", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_country", "payment_country_id", "payment_zone", "payment_zone_id", "payment_address_format", "payment_custom_field", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_country", "shipping_country_id", "shipping_zone", "shipping_zone_id", "shipping_address_format", "shipping_custom_field", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "affiliate_id", "commission", "marketing_id", "tracking", "language_id", "currency_id", "currency_code", "currency_value", "ip", "forwarded_ip", "user_agent", "accept_language", "date_added", "date_modified"},
+		ColumnOrder: []string{"invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_country", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_country", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
 		Fields: []FieldMapping{
 			// No need for order_id since it's managed by the database.
 			// As an example, here are a few more mappings:
-			{"InvoiceNo", "invoice_no", DoNothing("InvoiceNo")},
-			{"InvoicePrefix", "invoice_prefix", DoNothing("InvoicePrefix")},
-			{"StoreID", "store_id", func(entity Entity) interface{} { return "1" }},
-			{"StoreName", "store_name", func(entity Entity) interface{} { return "Telco Antennas" }},
-			{"StoreURL", "store_url", func(entity Entity) interface{} { return "https://telcoantennas.com.au/" }},
-			{"CustomerID", "customer_id", DoNothing("CustomerID")},
-			{"CustomerGroupID", "customer_group_id", MapCustomerGroupID},
-			{"PaymentFirstname", "firstname", DoNothing("PaymentFirstname")},
-			{"PaymentLastname", "lastname", DoNothing("PaymentLastname")},
-			{"Email", "email", DoNothing("Email")},
-			{"Telephone", "telephone", DoNothing("Telephone")},
-			{"Fax", "fax", DoNothing("Fax")},
-			{"CustomField", "custom_field", DoNothing("CustomField")},
-			{"PaymentFirstname", "payment_firstname", DoNothing("PaymentFirstname")},
-			{"PaymentLastname", "payment_lastname", DoNothing("PaymentLastname")},
-			{"PaymentCompany", "payment_company", DoNothing("PaymentCompany")},
-			{"PaymentAddress1", "payment_address_1", DoNothing("PaymentAddress1")},
-			{"PaymentAddress2", "payment_address_2", DoNothing("PaymentAddress2")},
-			{"PaymentCity", "payment_city", DoNothing("PaymentCity")},
-			{"PaymentPostcode", "payment_postcode", DoNothing("PaymentPostcode")},
-			{"PaymentCountry", "payment_country", DoNothing("PaymentCountry")},
-			{"PaymentCountryID", "payment_country_id", DoNothing("PaymentCountryID")},
-			{"PaymentZone", "payment_zone", DoNothing("PaymentZone")},
-			{"PaymentZoneID", "payment_zone_id", DoNothing("PaymentZoneID")},
-			{"PaymentAddressFormat", "payment_address_format", DoNothing("PaymentAddressFormat")},
-			{"PaymentCustomField", "payment_custom_field", DoNothing("PaymentCustomField")},
-			{"PaymentMethod", "payment_method", DoNothing("PaymentMethod")},
+			{"InvoiceNo", "invoice_no", StripNPrefix},
+			{"", "store_id", func(entity Entity) interface{} { return "0" }}, // always use 0
+			{"CustomerID", "customer_id", MapCustomerEmailToID(customerEmailMapping)},
+			{"Firstname", "firstname", JustUse("PaymentFirstname")},
+			{"Lastname", "lastname", JustUse("PaymentLastname")},
+			{"Email", "email", JustUse("Email")},
+			{"Telephone", "telephone", JustUse("Telephone")},
+			{"PaymentFirstname", "payment_firstname", JustUse("PaymentFirstname")},
+			{"PaymentLastname", "payment_lastname", JustUse("PaymentLastname")},
+			{"PaymentCompany", "payment_company", JustUse("PaymentCompany")},
+			{"PaymentAddress1", "payment_address_1", JustUse("PaymentAddress1")},
+			{"PaymentAddress2", "payment_address_2", JustUse("PaymentAddress2")},
+			{"PaymentCity", "payment_city", JustUse("PaymentCity")},
+			{"PaymentPostcode", "payment_postcode", JustUse("PaymentPostcode")},
+			{"PaymentCountry", "payment_country", JustUse("PaymentCountry")},
+			{"PaymentMethod", "payment_method", JustUse("PaymentMethod")},
 			{"PaymentCode", "payment_code", func(entity Entity) interface{} { return "cod" }}, // TODO: change this to a mapping function
-			{"ShippingFirstname", "shipping_firstname", DoNothing("ShippingFirstname")},
-			{"ShippingLastname", "shipping_lastname", DoNothing("ShippingLastname")},
-			{"ShippingCompany", "shipping_company", DoNothing("ShippingCompany")},
-			{"ShippingAddress1", "shipping_address_1", DoNothing("ShippingAddress1")},
-			{"ShippingAddress2", "shipping_address_2", DoNothing("ShippingAddress2")},
-			{"ShippingCity", "shipping_city", DoNothing("ShippingCity")},
-			{"ShippingPostcode", "shipping_postcode", DoNothing("ShippingPostcode")},
-			{"ShippingCountry", "shipping_country", DoNothing("ShippingCountry")},
-			{"ShippingCountryID", "shipping_country_id", DoNothing("ShippingCountryID")},
-			{"ShippingZone", "shipping_zone", DoNothing("ShippingZone")},
-			{"ShippingZoneID", "shipping_zone_id", DoNothing("ShippingZoneID")},
-			{"ShippingAddressFormat", "shipping_address_format", DoNothing("ShippingAddressFormat")},
-			{"ShippingCustomField", "shipping_custom_field", DoNothing("ShippingCustomField")},
-			{"ShippingMethod", "shipping_method", DoNothing("ShippingMethod")},
+			{"ShippingFirstname", "shipping_firstname", JustUse("ShippingFirstname")},
+			{"ShippingLastname", "shipping_lastname", JustUse("ShippingLastname")},
+			{"ShippingCompany", "shipping_company", JustUse("ShippingCompany")},
+			{"ShippingAddress1", "shipping_address_1", JustUse("ShippingAddress1")},
+			{"ShippingAddress2", "shipping_address_2", JustUse("ShippingAddress2")},
+			{"ShippingCity", "shipping_city", JustUse("ShippingCity")},
+			{"ShippingPostcode", "shipping_postcode", JustUse("ShippingPostcode")},
+			{"ShippingCountry", "shipping_country", JustUse("ShippingCountry")},
+			{"ShippingMethod", "shipping_method", JustUse("ShippingMethod")},
 			{"ShippingCode", "shipping_code", func(Entity) interface{} { return "Default shipping." }}, // TODO: change this to a mapping function
-			{"Comment", "comment", DoNothing("Comment")},
-			{"Total", "total", DoNothing("Total")},
+			{"Comment", "comment", JustUse("Comment")},
+			{"Total", "total", JustUse("Total")},
 			{"OrderStatusID", "order_status_id", MapOrderStatusID},
-			{"AffiliateID", "affiliate_id", DoNothing("AffiliateID")},
-			{"Commission", "commission", DoNothing("Commission")},
-			{"MarketingID", "marketing_id", DoNothing("MarketingID")},
-			{"Tracking", "tracking", DoNothing("Tracking")},
-			{"LanguageID", "language_id", DoNothing("LanguageID")},
-			{"CurrencyID", "currency_id", DoNothing("CurrencyID")},
-			{"CurrencyCode", "currency_code", DoNothing("CurrencyCode")},
-			{"CurrencyValue", "currency_value", DoNothing("CurrencyValue")},
-			{"IP", "ip", DoNothing("IP")},
-			{"ForwardedIP", "forwarded_ip", DoNothing("ForwardedIP")},
-			{"UserAgent", "user_agent", DoNothing("UserAgent")},
-			{"AcceptLanguage", "accept_language", DoNothing("AcceptLanguage")},
-			{"DateAdded", "date_added", DoNothing("DateAdded")},
-			{"DateModified", "date_modified", DoNothing("DateModified")},
+			{"DateAdded", "date_added", JustUse("DateAdded")},
+			{"DateModified", "date_modified", JustUse("DateModified")},
+			{"", "currency_id",	func(entity Entity) interface{} { return "4" }}, // Default currency ID for AUD
+			{"", "currency_code", func(entity Entity) interface{} { return "AUD" }}, // Default currency code for AUD
+			{"", "currency_value", func(entity Entity) interface{} { return "1.00000000" }}, // Default currency value for AUD
 		},
 	}
 }
@@ -218,10 +197,10 @@ func GetOrderProductMapping(orderIDMapping map[string]int, productIdMapping map[
 			// Assuming you'll handle order_product_id auto-increment outside this mapping.
 			{"OrderID", "order_id", MapOrderID(orderIDMapping)},
 			{"OrderLineSKU", "product_id", MapSKUToProductID(productIdMapping)}, // You'd want to change "ProductSKU" to the name from your CSV, for example "OrderLineSKU"
-			{"OrderLineDescription", "name", DoNothing("OrderLineDescription")},
-			{"OrderLineSKU", "model", DoNothing("OrderLineSKU")}, // Assuming SKU is also the model.
-			{"OrderLineQty", "quantity", DoNothing("OrderLineQty")},
-			{"OrderLineUnitPrice", "price", DoNothing("OrderLineUnitPrice")},
+			{"OrderLineDescription", "name", JustUse("OrderLineDescription")},
+			{"OrderLineSKU", "model", JustUse("OrderLineSKU")}, // Assuming SKU is also the model.
+			{"OrderLineQty", "quantity", JustUse("OrderLineQty")},
+			{"OrderLineUnitPrice", "price", JustUse("OrderLineUnitPrice")},
 			// For fields like "total", "tax", and "reward" you might need to calculate values or define new mapping functions.
 			{"ProductTotal", "total", CalculateTotal},
 			{"ProductTax", "tax", CalculateTax},
@@ -229,6 +208,30 @@ func GetOrderProductMapping(orderIDMapping map[string]int, productIdMapping map[
 		},
 	}
 }
+
+func MapCustomerEmailToID(customerIdMapping map[string]int) func(entity Entity) interface{} {
+	return func(entity Entity) interface{} {
+		email, ok := entity.GetValue("Email").(string)
+		if !ok {
+			fmt.Println("WARNING: Unable to convert Email to string for entity:", entity)
+			return "0" // or some other default value or behavior
+		}
+
+		fmt.Println("Processing email:", email) // Debugging line
+		if id, exists := customerIdMapping[email]; exists {
+			return strconv.Itoa(id)
+		} else {
+			fmt.Printf("WARNING: Email %s not found in customer mapping. Assigning default ID.\n", email)
+			return "0"
+		}
+	}
+}
+
+func StripNPrefix(value Entity) interface{} {
+	orderId := value.GetValue("OrderID").(string)
+    return strings.ReplaceAll(orderId, "N", "")
+}
+
 
 func MapSKUToProductID(productIdMapping map[string]int) func(entity Entity) interface{} {
 	return func(entity Entity) interface{} {
@@ -294,21 +297,6 @@ func CalculateReward(entity Entity) interface{} {
 	return "0.0000" // Assuming no reward
 }
 
-// func GetOrderTotalMapping(orderIDMapping map[string]int) TableMapping {
-// 	return TableMapping{
-// 		TableName:   "oc_order_total",
-// 		ColumnOrder: []string{"order_id", "code", "title", "value", "sort_order"},
-// 		Fields: []FieldMapping{
-// 			{"OrderID", "order_id", MapOrderID(orderIDMapping)},
-// 			{"AmountPaid", "code", MapTotalCode},
-// 			{"AmountPaid", "title", MapTotalTitle},
-// 			{"AmountPaid", "value", CalculateTotalValue},
-// 			{"AmountPaid", "sort_order", MapSortOrder},
-// 			//... Additional fields as required from your CSV
-// 		},
-// 	}
-// }
-
 func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) []string {
 	statements := []string{
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%.4f', 1);", orderID, subTotalValue-shippingCost),
@@ -320,7 +308,6 @@ func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost
 	}
 	return statements
 }
-
 
 func MapTotalTitle(entity Entity) interface{} {
 	return "Total"
@@ -366,7 +353,6 @@ func CalculateOrderTotals(entity Entity) (float64, float64, float64, float64) {
 
 	return subTotalValue, shippingCost, taxValue, totalValue
 }
-
 
 func MapTitle(entity Entity) interface{} {
 	code := entity.GetValue("AmountPaid").(string) // Assumes AmountPaid is a string

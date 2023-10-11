@@ -122,13 +122,13 @@ func GetProductMapping() TableMapping {
 		Fields: []FieldMapping{
 			{"Model", "model", ToUpperCase("Model")},
 			{"Model", "sku", ToUpperCase("Model")},
-			{"", "upc", ReturnEmptyString()},
-			{"", "ean", ReturnEmptyString()},
-			{"", "jan", ReturnEmptyString()},
-			{"", "isbn", ReturnEmptyString()},
-			{"", "mpn", ReturnEmptyString()},
-			{"", "location", ReturnEmptyString()},
-			{"Quantity", "quantity", DoNothing("Quantity")},
+			{"", "upc", EmptyString()},
+			{"", "ean", EmptyString()},
+			{"", "jan", EmptyString()},
+			{"", "isbn", EmptyString()},
+			{"", "mpn", EmptyString()},
+			{"", "location", EmptyString()},
+			{"Quantity", "quantity", JustUse("Quantity")},
 			{"", "stock_status_id", func(entity Entity) interface{} { return "7" }}, // Always 7 for "In Stock"
 			{"Model", "image", MapImageFilePath},                                    // Using the Model to map the image file path
 			{"", "manufacturer_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Telco Antennas"
@@ -137,11 +137,11 @@ func GetProductMapping() TableMapping {
 			{"", "points", func(entity Entity) interface{} { return "0" }},
 			{"TaxClassId", "tax_class_id", GetTaxClassID},
 			{"", "date_available", func(entity Entity) interface{} { return "2023-09-20" }}, // example date
-			{"Weight", "weight", DoNothing("Weight")},
+			{"Weight", "weight", JustUse("Weight")},
 			{"", "weight_class_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Kilogram"
-			{"Length", "length", DoNothing("Length")},
-			{"Width", "width", DoNothing("Width")},
-			{"Height", "height", DoNothing("Height")},
+			{"Length", "length", JustUse("Length")},
+			{"Width", "width", JustUse("Width")},
+			{"Height", "height", JustUse("Height")},
 			{"", "length_class_id", func(entity Entity) interface{} { return "4" }}, // Always 4 for "Meter"
 			{"", "subtract", func(entity Entity) interface{} { return "1" }},        // Always 1 for "Yes"
 			{"", "minimum", func(entity Entity) interface{} { return "1" }},         // Always 1 for "Yes"
@@ -162,12 +162,12 @@ func GetProductDescriptionMapping(productIdMapping map[string]int) TableMapping 
 		Fields: []FieldMapping{
 			{"Model", "product_id", GetProductIdTransformation(productIdMapping)},
 			{"", "language_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for English
-			{"Name", "name", DoNothing("Name")},
-			{"Description", "description", DoNothing("Description")},
+			{"Name", "name", JustUse("Name")},
+			{"Description", "description", JustUse("Description")},
 			{"", "tag", func(entity Entity) interface{} { return "" }},
-			{"Name", "meta_title", DoNothing("Name")},
-			{"Name", "meta_description", DoNothing("Name")},
-			{"Name", "meta_keyword", DoNothing("Name")},
+			{"Name", "meta_title", JustUse("Name")},
+			{"Name", "meta_description", JustUse("Name")},
+			{"Name", "meta_keyword", JustUse("Name")},
 		},
 	}
 }
@@ -212,8 +212,8 @@ func GetProductToCostMapping(productIdMapping map[string]int) TableMapping {
 		Fields: []FieldMapping{
 			{"Model", "product_id", GetProductIdTransformation(productIdMapping)},
 			{"", "supplier_id", func(entity Entity) interface{} { return "0" }}, // Default store value
-			{"Cost", "cost", DoNothing("Cost")},
-			{"Cost", "cost_amount", DoNothing("Cost")},
+			{"Cost", "cost", JustUse("Cost")},
+			{"Cost", "cost_amount", JustUse("Cost")},
 			{"", "cost_percentage", func(entity Entity) interface{} { return "0.00" }},   // Default store value
 			{"", "cost_additional", func(entity Entity) interface{} { return "0.0000" }}, // Default store value
 			{"", "costing_method", func(entity Entity) interface{} { return "0" }},       // Default store value

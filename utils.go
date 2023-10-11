@@ -36,13 +36,13 @@ func GetDateAdded() string {
 	return dateAdded
 }
 
-func DoNothing(fieldName string) func(Entity) interface{} {
+func JustUse(fieldName string) func(Entity) interface{} {
 	return func(entity Entity) interface{} {
 		return entity.GetValue(fieldName)
 	}
 }
 
-func ReturnEmptyString() func(Entity) interface{} {
+func EmptyString() func(Entity) interface{} {
 	return func(_ Entity) interface{} {
 		return ""
 	}
