@@ -112,7 +112,18 @@ func orders() {
 	processTable(orderMapping, entities, orderIDMapping, sqlFile)
 	processTable(GetOrderProductMapping(orderIDMapping, productIdMapping), entities, orderIDMapping, sqlFile)
 
-	processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
+	// processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
+	for _, record := range orders { // assuming orderRecords is a slice of OrderRecord
+		orderID := record.OrderID
+		subTotalValue, shippingCost, taxValue, totalValue := CalculateOrderTotals(record)
+
+		sqlStatements := GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue)
+
+		for _, stmt := range sqlStatements {
+			sqlFile.WriteString(stmt + "\n")
+		}
+	}
+
 }
 
 

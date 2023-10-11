@@ -294,20 +294,33 @@ func CalculateReward(entity Entity) interface{} {
 	return "0.0000" // Assuming no reward
 }
 
-func GetOrderTotalMapping(orderIDMapping map[string]int) TableMapping {
-	return TableMapping{
-		TableName:   "oc_order_total",
-		ColumnOrder: []string{"order_id", "code", "title", "value", "sort_order"},
-		Fields: []FieldMapping{
-			{"OrderID", "order_id", MapOrderID(orderIDMapping)},
-			{"AmountPaid", "code", MapTotalCode},
-			{"AmountPaid", "title", MapTotalTitle},
-			{"AmountPaid", "value", CalculateTotalValue},
-			{"AmountPaid", "sort_order", MapSortOrder},
-			//... Additional fields as required from your CSV
-		},
+// func GetOrderTotalMapping(orderIDMapping map[string]int) TableMapping {
+// 	return TableMapping{
+// 		TableName:   "oc_order_total",
+// 		ColumnOrder: []string{"order_id", "code", "title", "value", "sort_order"},
+// 		Fields: []FieldMapping{
+// 			{"OrderID", "order_id", MapOrderID(orderIDMapping)},
+// 			{"AmountPaid", "code", MapTotalCode},
+// 			{"AmountPaid", "title", MapTotalTitle},
+// 			{"AmountPaid", "value", CalculateTotalValue},
+// 			{"AmountPaid", "sort_order", MapSortOrder},
+// 			//... Additional fields as required from your CSV
+// 		},
+// 	}
+// }
+
+func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) []string {
+	statements := []string{
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%.4f', 1);", orderID, subTotalValue-shippingCost),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%.4f', 3);", orderID, shippingCost),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%.4f', 6);", orderID, totalValue),
 	}
+	if taxValue > 0 {
+		statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'VAT', '%.4f', 5);", orderID, taxValue))
+	}
+	return statements
 }
+
 
 func MapTotalTitle(entity Entity) interface{} {
 	return "Total"
@@ -328,7 +341,7 @@ func safeToFloat(value interface{}) float64 {
 	return 0.0
 }
 
-func CalculateTotalValue(entity Entity) interface{} {
+func CalculateOrderTotals(entity Entity) (float64, float64, float64, float64) {
 	taxRate := 0.1
 	if entity.GetValue("OrderLineTaxFree") == "y" {
 		taxRate = 0.0
@@ -337,23 +350,23 @@ func CalculateTotalValue(entity Entity) interface{} {
 	// Calculate sub-total for the line item
 	price := safeToFloat(entity.GetValue("OrderLineUnitPrice"))
 	quantity := safeToFloat(entity.GetValue("OrderLineQty"))
-	subTotalValue := price * quantity
+	subTotalItem := price * quantity
+
+	// Calculate total sub-total (might include more line items in reality)
+	subTotalValue := subTotalItem
 
 	// Add ShippingCost to the sub-total
 	shippingCost := safeToFloat(entity.GetValue("ShippingCost"))
 	subTotalValue += shippingCost
 
 	// Calculate tax on the sub-total
-	taxValue := subTotalValue * taxRate
+	taxValue := subTotalItem * taxRate
 
 	totalValue := subTotalValue + taxValue
 
-	// Debugging output
-	fmt.Printf("OrderID: %v, ShippingCost: %f, SubTotal: %f, TaxValue: %f, TotalValue: %f\n",
-		entity.GetValue("OrderID"), shippingCost, subTotalValue, taxValue, totalValue)
-
-	return fmt.Sprintf("%.4f", totalValue)
+	return subTotalValue, shippingCost, taxValue, totalValue
 }
+
 
 func MapTitle(entity Entity) interface{} {
 	code := entity.GetValue("AmountPaid").(string) // Assumes AmountPaid is a string
