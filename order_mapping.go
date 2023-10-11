@@ -297,17 +297,16 @@ func CalculateReward(entity Entity) interface{} {
 	return "0.0000" // Assuming no reward
 }
 
-func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) string {
-	var valueEntries []string
-
-	valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'sub_total', 'Sub-Total', '%.4f', 1)", orderID, subTotalValue-shippingCost))
-	valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'shipping', 'Shipping', '%.4f', 3)", orderID, shippingCost))
-	valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'total', 'Total', '%.4f', 6)", orderID, totalValue))
-	if taxValue > 0 {
-		valueEntries = append(valueEntries, fmt.Sprintf("('%s', 'tax', 'VAT', '%.4f', 5)", orderID, taxValue))
+func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) []string {
+	statements := []string{
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%.4f', 1);", orderID, subTotalValue-shippingCost),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%.4f', 3);", orderID, shippingCost),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%.4f', 6);", orderID, totalValue),
 	}
-
-	return fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES\n%s;", strings.Join(valueEntries, ",\n"))
+	if taxValue > 0 {
+		statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'VAT', '%.4f', 5);", orderID, taxValue))
+	}
+	return statements
 }
 
 func MapTotalTitle(entity Entity) interface{} {
