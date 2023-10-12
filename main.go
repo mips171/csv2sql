@@ -133,7 +133,7 @@ func orders() {
 
 	// Use the helper function for each mapping
 	processTable(orderMapping, entities, orderIDMapping, sqlFile)
-	processTable(GetOrderProductMapping(orderIDMapping, productIdMapping), entities, orderIDMapping, sqlFile)
+	processTable(GetOrderProductMapping(productIdMapping), entities, orderIDMapping, sqlFile)
 
 	sqlFile.WriteString("TRUNCATE TABLE `oc_order_total`;\n")
 

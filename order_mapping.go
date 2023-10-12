@@ -39,7 +39,6 @@ type OrderRecord struct {
 	PaymentMethod        string `csv:"Payment Method"`
 	ShippingMethod       string `csv:"Shipping Method"`
 	ShippingCost         string `csv:"Shipping Cost"`
-	Comment              string `csv:"Customer Instructions"`
 	Total                string `csv:"Amount Paid"`
 	PaymentCode          string // this will need to be mapped based on PaymentMethod, not present in CSV
 	ShippingCode         string // this will need to be mapped based on ShippingMethod, not present in CSV
@@ -53,6 +52,17 @@ type OrderRecord struct {
 	OrderLineUnitPrice   string `csv:"Order Line Unit Price"`
 	AmountPaid           string `csv:"Amount Paid"`
 	// Add any other relevant fields as needed.
+
+	// Comments
+	RUT950SerialNumber   string `csv:"RUT950 Serial Number"`
+	RUT950IMEI           string `csv:"RUT950 IMEI"`
+	TransactionNumber    string `csv:"Transaction Number"`
+	Misc0                string `csv:"Misc 0"`
+	MiscNotes1           string `csv:"Misc Notes 1"`
+	InstallationNotes    string `csv:"Installation Service Notes"`
+	MiscNotes2           string `csv:"Misc Notes 2"`
+	CustomerInstructions string `csv:"Customer Instructions"`
+	InternalNotes        string `csv:"Internal Notes"`
 }
 
 func (o OrderRecord) GetValue(fieldName string) interface{} {
@@ -111,8 +121,6 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 		return o.ShippingMethod
 	case "ShippingCost":
 		return o.ShippingCost
-	case "Comment":
-		return o.Comment
 	case "Total":
 		return o.Total
 	case "PaymentCode":
@@ -134,6 +142,37 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 	case "OrderLineUnitPrice":
 		return o.OrderLineUnitPrice
 	// ... add other fields as required from your CSV
+	case "AllComments":
+		// conditionally build the string to avoid blanks
+		var comments []string
+		if o.RUT950SerialNumber != "" {
+			comments = append(comments, fmt.Sprintf("RUT950 Serial Number: %s", o.RUT950SerialNumber))
+		}
+		if o.RUT950IMEI != "" {
+			comments = append(comments, fmt.Sprintf("RUT950 IMEI: %s", o.RUT950IMEI))
+		}
+		if o.TransactionNumber != "" {
+			comments = append(comments, fmt.Sprintf("Transaction Number: %s", o.TransactionNumber))
+		}
+		if o.Misc0 != "" {
+			comments = append(comments, fmt.Sprintf("Misc 0: %s", o.Misc0))
+		}
+		if o.MiscNotes1 != "" {
+			comments = append(comments, fmt.Sprintf("Misc Notes 1: %s", o.MiscNotes1))
+		}
+		if o.InstallationNotes != "" {
+			comments = append(comments, fmt.Sprintf("Installation Service Notes: %s", o.InstallationNotes))
+		}
+		if o.MiscNotes2 != "" {
+			comments = append(comments, fmt.Sprintf("Misc Notes 2: %s", o.MiscNotes2))
+		}
+		if o.CustomerInstructions != "" {
+			comments = append(comments, fmt.Sprintf("Customer Instructions: %s", o.CustomerInstructions))
+		}
+		if o.InternalNotes != "" {
+			comments = append(comments, fmt.Sprintf("Internal Notes: %s", o.InternalNotes))
+		}
+		return strings.Join(comments, "\n")
 	default:
 		return nil
 	}
@@ -145,10 +184,11 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_order",
-		ColumnOrder: []string{"invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_country", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_country", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
+		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_country", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_country", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
 		Fields: []FieldMapping{
 			// No need for order_id since it's managed by the database.
 			// As an example, here are a few more mappings:
+			{"", "order_id", StripNPrefix},
 			{"InvoiceNo", "invoice_no", StripNPrefix},
 			{"", "store_id", func(entity Entity) interface{} { return "0" }}, // always use 0
 			{"CustomerID", "customer_id", MapCustomerEmailToID(customerEmailMapping)},
@@ -176,26 +216,26 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"ShippingCountry", "shipping_country", JustUse("ShippingCountry")},
 			{"ShippingMethod", "shipping_method", JustUse("ShippingMethod")},
 			{"ShippingCode", "shipping_code", func(Entity) interface{} { return "Default shipping." }}, // TODO: change this to a mapping function
-			{"Comment", "comment", JustUse("Comment")},
+			{"AllComments", "comment", JustUse("AllComments")},
 			{"Total", "total", JustUse("Total")},
 			{"OrderStatus", "order_status_id", MapOrderStatusID},
 			{"DateAdded", "date_added", JustUse("DateAdded")},
 			{"DateModified", "date_modified", JustUse("DateModified")},
-			{"", "currency_id",	func(entity Entity) interface{} { return "4" }}, // Default currency ID for AUD
-			{"", "currency_code", func(entity Entity) interface{} { return "AUD" }}, // Default currency code for AUD
+			{"", "currency_id", func(entity Entity) interface{} { return "4" }},             // Default currency ID for AUD
+			{"", "currency_code", func(entity Entity) interface{} { return "AUD" }},         // Default currency code for AUD
 			{"", "currency_value", func(entity Entity) interface{} { return "1.00000000" }}, // Default currency value for AUD
 		},
 	}
 }
 
 // INSERT INTO `oc_order_product` (`order_product_id`, `order_id`, `product_id`, `name`, `model`, `quantity`, `price`, `total`, `tax`, `reward`) VALUES ('4', '2', '0', 'Patch Lead for Bigpond Ultimate 312U USB', 'PL2001', '1', '19.9500', '17.9500', '2.0000', '0');
-func GetOrderProductMapping(orderIDMapping map[string]int, productIdMapping map[string]int) TableMapping {
+func GetOrderProductMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_order_product",
 		ColumnOrder: []string{"order_id", "product_id", "name", "model", "quantity", "price", "total", "tax", "reward"},
 		Fields: []FieldMapping{
 			// Assuming you'll handle order_product_id auto-increment outside this mapping.
-			{"OrderID", "order_id", MapOrderID(orderIDMapping)},
+			{"OrderID", "order_id", StripNPrefix},
 			{"OrderLineSKU", "product_id", MapSKUToProductID(productIdMapping)}, // You'd want to change "ProductSKU" to the name from your CSV, for example "OrderLineSKU"
 			{"OrderLineDescription", "name", JustUse("OrderLineDescription")},
 			{"OrderLineSKU", "model", JustUse("OrderLineSKU")}, // Assuming SKU is also the model.
@@ -229,9 +269,8 @@ func MapCustomerEmailToID(customerIdMapping map[string]int) func(entity Entity) 
 
 func StripNPrefix(value Entity) interface{} {
 	orderId := value.GetValue("OrderID").(string)
-    return strings.ReplaceAll(orderId, "N", "")
+	return strings.ReplaceAll(orderId, "N", "")
 }
-
 
 func MapSKUToProductID(productIdMapping map[string]int) func(entity Entity) interface{} {
 	return func(entity Entity) interface{} {
