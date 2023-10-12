@@ -15,27 +15,31 @@ type OrderRecord struct {
 	OrderID              string `csv:"Order ID"`
 	OrderStatus          string `csv:"Order Status"`
 	Approved             string `csv:"Approved"`
-	ShipFirstname        string `csv:"Ship First Name"`
-	ShipLastname         string `csv:"Ship Last Name"`
+
 	Email                string `csv:"Email"`
 	Telephone            string `csv:"Ship Phone"`
 	Fax                  string `csv:"Ship Fax"`
+
 	Firstname            string `csv:"Bill First Name"`
 	Lastname             string `csv:"Bill Last Name"`
 	PaymentCompany       string `csv:"Bill Company"`
 	PaymentAddress1      string `csv:"Bill Address Line 1"`
 	PaymentAddress2      string `csv:"Bill Address Line 2"`
 	PaymentCity          string `csv:"Bill City"`
+	PaymentState		 string `csv:"Bill State"`
 	PaymentPostcode      string `csv:"Bill Post Code"`
 	PaymentCountry       string `csv:"Bill Country"`
+
 	ShippingFirstname    string `csv:"Ship First Name"`
 	ShippingLastname     string `csv:"Ship Last Name"`
 	ShippingCompany      string `csv:"Ship Company"`
 	ShippingAddress1     string `csv:"Ship Address Line 1"`
 	ShippingAddress2     string `csv:"Ship Address Line 2"`
 	ShippingCity         string `csv:"Ship City"`
+	ShippingState 		 string `csv:"Ship State"`
 	ShippingPostcode     string `csv:"Ship Post Code"`
 	ShippingCountry      string `csv:"Ship Country"`
+
 	PaymentMethod        string `csv:"Payment Method"`
 	ShippingMethod       string `csv:"Shipping Method"`
 	ShippingCost         string `csv:"Shipping Cost"`
@@ -73,10 +77,6 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 		return o.OrderStatus
 	case "Approved":
 		return o.Approved
-	case "ShipFirstname":
-		return o.ShipFirstname
-	case "ShipLastname":
-		return o.ShipLastname
 	case "Email":
 		return o.Email
 	case "Telephone":
@@ -95,6 +95,8 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 		return o.PaymentAddress2
 	case "PaymentCity":
 		return o.PaymentCity
+	case "PaymentState":
+		return o.PaymentState
 	case "PaymentPostcode":
 		return o.PaymentPostcode
 	case "PaymentCountry":
@@ -111,6 +113,8 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 		return o.ShippingAddress2
 	case "ShippingCity":
 		return o.ShippingCity
+	case "ShippingState":
+		return o.ShippingState
 	case "ShippingPostcode":
 		return o.ShippingPostcode
 	case "ShippingCountry":
@@ -184,7 +188,7 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_order",
-		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_country", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_country", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
+		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_zone", "payment_zone_id", "payment_country", "payment_country_id",  "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_zone", "shipping_zone_id", "shipping_country", "shipping_country_id",  "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
 		Fields: []FieldMapping{
 			// No need for order_id since it's managed by the database.
 			// As an example, here are a few more mappings:
@@ -202,8 +206,11 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"PaymentAddress1", "payment_address_1", JustUse("PaymentAddress1")},
 			{"PaymentAddress2", "payment_address_2", JustUse("PaymentAddress2")},
 			{"PaymentCity", "payment_city", JustUse("PaymentCity")},
+			{"", "payment_zone", JustUse("PaymentState")}, // derive state from postcode
+			{"", "payment_zone_id", MapAustralianPostCodeToStateZoneID("PaymentPostcode")}, // derive state from postcode
 			{"PaymentPostcode", "payment_postcode", JustUse("PaymentPostcode")},
 			{"PaymentCountry", "payment_country", JustUse("PaymentCountry")},
+			{"", "payment_country_id", MapCountryToCode("PaymentCountry")},
 			{"PaymentMethod", "payment_method", JustUse("PaymentMethod")},
 			{"PaymentCode", "payment_code", func(entity Entity) interface{} { return "cod" }}, // TODO: change this to a mapping function
 			{"ShippingFirstname", "shipping_firstname", JustUse("ShippingFirstname")},
@@ -212,8 +219,11 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"ShippingAddress1", "shipping_address_1", JustUse("ShippingAddress1")},
 			{"ShippingAddress2", "shipping_address_2", JustUse("ShippingAddress2")},
 			{"ShippingCity", "shipping_city", JustUse("ShippingCity")},
+			{"", "shipping_zone", JustUse("ShippingState")}, // derive state from postcode
+			{"", "shipping_zone_id", MapAustralianPostCodeToStateZoneID("ShippingPostcode")}, // derive state from postcode
 			{"ShippingPostcode", "shipping_postcode", JustUse("ShippingPostcode")},
 			{"ShippingCountry", "shipping_country", JustUse("ShippingCountry")},
+			{"", "shipping_country_id", MapCountryToCode("ShippingCountry")},
 			{"ShippingMethod", "shipping_method", JustUse("ShippingMethod")},
 			{"ShippingCode", "shipping_code", func(Entity) interface{} { return "Default shipping." }}, // TODO: change this to a mapping function
 			{"AllComments", "comment", JustUse("AllComments")},
