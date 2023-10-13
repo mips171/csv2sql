@@ -5,13 +5,13 @@ func GetAddressMapping() TableMapping {
 		TableName:   "oc_address",
 		ColumnOrder: []string{"customer_id", "firstname", "lastname", "company", "address_1", "address_2", "city", "postcode"},
 		Fields: []FieldMapping{
-			{"Bill First Name", "firstname", JustUse("Bill First Name")},
-			{"Bill Last Name", "lastname", JustUse("Bill Last Name")},
-			{"Bill Company", "company", JustUse("Bill Company")},
-			{"Bill Street Address Line 1", "address_1", JustUse("Bill Street Address Line 1")},
-			{"Bill Street Address Line 2", "address_2", JustUse("Bill Street Address Line 2")},
-			{"Bill City", "city", JustUse("Bill City")},
-			{"Bill Post Code", "postcode", JustUse("Bill Post Code")},
+			{"BillFirstName", "firstname", JustUse("BillFirstName")},
+			{"BillLastName", "lastname", JustUse("BillLastName")},
+			{"BillCompany", "company", JustUse("Bill Company")},
+			{"BillStreetAddressLine1", "address_1", JustUse("Bill Street Address Line 1")},
+			{"BillStreetAddressLine2", "address_2", JustUse("Bill Street Address Line 2")},
+			{"BillCity", "city", JustUse("Bill City")},
+			{"BillPostCode", "postcode", JustUse("Bill Post Code")},
 		},
 	}
 }
