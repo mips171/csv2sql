@@ -21,7 +21,7 @@ type ProductRecord struct {
 	Length             string `csv:"Length (Shipping)"`
 	Width              string `csv:"Width (Shipping)"`
 	Height             string `csv:"Height (Shipping)"`
-	Weight             string `csv:"Weight (Shipping)"`
+	Weight             string `csv:"Weight (Shipping)"` // be sure to check sneaky neto who calls it Weigh (shipping) note the lowercase s
 	TaxClassId         string `csv:"Tax Free Item"`
 	DateAdded          string `csv:"Date Added"`
 	DateModified       string `csv:"Date Modified"`
@@ -114,42 +114,40 @@ func productToMap(product ProductRecord) map[string]string {
 func GetProductMapping() TableMapping {
 	return TableMapping{
 		TableName: "oc_product",
-		ColumnOrder: []string{"model", "sku", "upc", "ean", "jan", "isbn", "mpn", "location", "quantity",
-			"stock_status_id", "image", "manufacturer_id", "shipping", "price", "points", "tax_class_id", "date_available",
+		ColumnOrder: []string{"model", "sku", "location", "quantity",
+			"stock_status_id", "image", "manufacturer_id", "shipping", "price", "tax_class_id", "date_available",
 			"weight", "weight_class_id", "length", "width", "height", "length_class_id",
 			"subtract", "minimum", "sort_order", "status", "viewed",
 			"date_added", "date_modified"},
 		Fields: []FieldMapping{
 			{"Model", "model", ToUpperCase("Model")},
 			{"Model", "sku", ToUpperCase("Model")},
-			{"", "upc", EmptyString()},
-			{"", "ean", EmptyString()},
-			{"", "jan", EmptyString()},
-			{"", "isbn", EmptyString()},
-			{"", "mpn", EmptyString()},
 			{"", "location", EmptyString()},
 			{"Quantity", "quantity", JustUse("Quantity")},
+
 			{"", "stock_status_id", func(entity Entity) interface{} { return "7" }}, // Always 7 for "In Stock"
 			{"Model", "image", MapImageFilePath},                                    // Using the Model to map the image file path
 			{"", "manufacturer_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Telco Antennas"
 			{"", "shipping", func(entity Entity) interface{} { return "1" }},        // Always 1 for "Yes"
 			{"Price", "price", GetRetailPrice},
-			{"", "points", func(entity Entity) interface{} { return "0" }},
 			{"TaxClassId", "tax_class_id", GetTaxClassID},
 			{"", "date_available", func(entity Entity) interface{} { return "2023-09-20" }}, // example date
+
 			{"Weight", "weight", JustUse("Weight")},
 			{"", "weight_class_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Kilogram"
 			{"Length", "length", JustUse("Length")},
 			{"Width", "width", JustUse("Width")},
 			{"Height", "height", JustUse("Height")},
 			{"", "length_class_id", func(entity Entity) interface{} { return "4" }}, // Always 4 for "Meter"
-			{"", "subtract", func(entity Entity) interface{} { return "1" }},        // Always 1 for "Yes"
-			{"", "minimum", func(entity Entity) interface{} { return "1" }},         // Always 1 for "Yes"
-			{"", "sort_order", func(entity Entity) interface{} { return "1" }},      // Always 1 for "Yes"
+
+			{"", "subtract", func(entity Entity) interface{} { return "1" }},   // Always 1 for "Yes"
+			{"", "minimum", func(entity Entity) interface{} { return "1" }},    // Always 1 for "Yes"
+			{"", "sort_order", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Yes"
 			{"Status", "status", MapProductStatus},
 			{"", "viewed", func(entity Entity) interface{} { return "0" }}, // Always 0 for "No"
-			{"DateAdded", "date_added", func(entity Entity) interface{} { return GetDateAdded() }},
-			{"DateModified", "date_modified", func(entity Entity) interface{} { return GetDateAdded() }},
+
+			{"DateAdded", "date_added", func(entity Entity) interface{} { return "2010-02-03 16:59:00" }},
+			{"DateModified", "date_modified", func(entity Entity) interface{} { return "2010-02-03 16:59:00" }},
 		},
 	}
 }

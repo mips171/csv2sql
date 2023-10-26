@@ -10,8 +10,8 @@ import (
 func main() {
 
 	products()
-	categories()
-	orders()
+	// categories()
+	// orders()
 
 	fmt.Println("SQL file has been generated successfully.")
 }
@@ -127,9 +127,7 @@ func orders() {
 		customerIdMapping[cust.Email] = index + 1
 	}
 
-
 	orderMapping := GetOrderMapping(customerIdMapping)
-
 
 	// Use the helper function for each mapping
 	processTable(orderMapping, entities, orderIDMapping, sqlFile)
@@ -155,7 +153,7 @@ func products() {
 	productMapping := GetProductMapping()
 
 	// Open the file
-	file, err := os.OpenFile("./data/product_cleaned.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile("./data/products_export_full_20230815_210049_71306.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

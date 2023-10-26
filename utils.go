@@ -40,7 +40,7 @@ func GetStatus(activeStatus string) func(Entity) interface{} {
 
 func GetDateAdded() func(Entity) interface{} {
 	return func(entity Entity) interface{} {
-		return time.Now().Format("2006-01-02 15:04:05")
+		return string(time.Now().Format("2006-01-02 15:04:05"))
 	}
 }
 
