@@ -1,39 +1,104 @@
 package main
 
+import "strconv"
+
 // "Username*","Email Address","Newsletter Subscriber","Bill Phone","Bill Fax","Bill First Name","Bill Last Name","Bill Company","Bill Street Address Line 1","Bill Street Address Line 2","Bill City","Bill State","Bill Post Code","Bill Country","Cheque Account Number","Ship Post Code","Ship Address Line2","Ship Address Line 1","Parent Username","Ship State","Quote Approval Username","Active","Ship Company","Default Invoice Terms","Website URL","Ship Phone","Permission","ABN/ACN","Cheque Account Name","Ship Country","Default Discount Percentage","Ship Fax","Ship City","Gender","Referral Commission","Account Manager","Secondary Email Address","Ship Last Name","Ship First Name","Default Document Template","Referral Username","Default Order Type","Date Of Birth","VIP Customer","Sales Channel","Type","Survey's and Special Orders","Classification 2","Credit Limit","Classification 1","On Credit Hold","Skip Record","Internal Notes","Default Shipping Address"
 type CustomerRecord struct {
-	Email      string `csv:"Email Address"`
-	Group      string `csv:"User Group"`
-	FirstName  string `csv:"First Name"`
-	Surname   string `csv:"Last Name"`
-	Address    string `csv:"Address"`
-	City       string `csv:"City"`
-	Phone      string `csv:"Phone"`
-	Newsletter string `csv:"Newsletter Subscriber"`
-	Status     string `csv:"Active"`
-	ABNACN     string `csv:"ABN/ACN"`
+	Email         string `csv:"Email Address"`
+	Group         string `csv:"User Group"`
+	Address       string `csv:"Address"`
+	City          string `csv:"City"`
+	Phone         string `csv:"Bill Phone"`
+	Newsletter    string `csv:"Newsletter Subscriber"`
+	Status        string `csv:"Active"`
+	ABNACN        string `csv:"ABN/ACN"`
 	BillFirstName string `csv:"Bill First Name"`
-	BillLastName string `csv:"Bill Last Name"`
-	BillCompany string `csv:"Bill Company"`
-	BillAddress string `csv:"Bill Street Address Line 1"`
-	BillCity string `csv:"Bill City"`
-	BillState string `csv:"Bill State"`
-	BillPostCode string `csv:"Bill Post Code"`
-	BillCountry string `csv:"Bill Country"`
+	BillLastName  string `csv:"Bill Last Name"`
+	BillCompany   string `csv:"Bill Company"`
+	BillAddress   string `csv:"Bill Street Address Line 1"`
+	BillCity      string `csv:"Bill City"`
+	BillState     string `csv:"Bill State"`
+	BillPostCode  string `csv:"Bill Post Code"`
+	BillCountry   string `csv:"Bill Country"`
 	ShipFirstName string `csv:"Ship First Name"`
-	ShipLastName string `csv:"Ship Last Name"`
-	ShipCompany string `csv:"Ship Company"`
-	ShipAddress string `csv:"Ship Address Line 1"`
-	ShipCity string `csv:"Ship City"`
-	ShipState string `csv:"Ship State"`
-	ShipPostCode string `csv:"Ship Post Code"`
-	ShipCountry string `csv:"Ship Country"`
-	ShipPhone string `csv:"Ship Phone"`
-	ShipAddress2 string `csv:"Ship Address Line2"`
-	ShipEmail string `csv:"Secondary Email Address"`
-	ShipNotes string `csv:"Internal Notes"`
-	ShipDefault string `csv:"Default Shipping Address"`
+	ShipLastName  string `csv:"Ship Last Name"`
+	ShipCompany   string `csv:"Ship Company"`
+	ShipAddress   string `csv:"Ship Address Line 1"`
+	ShipCity      string `csv:"Ship City"`
+	ShipState     string `csv:"Ship State"`
+	ShipPostCode  string `csv:"Ship Post Code"`
+	ShipCountry   string `csv:"Ship Country"`
+	ShipPhone     string `csv:"Ship Phone"`
+	ShipAddress2  string `csv:"Ship Address Line2"`
+	ShipEmail     string `csv:"Secondary Email Address"`
+	ShipNotes     string `csv:"Internal Notes"`
+	ShipDefault   string `csv:"Default Shipping Address"`
 	//... any other fields your CSV might have.
+}
+
+func (p CustomerRecord) GetValue(fieldName string) interface{} {
+	switch fieldName {
+	case "Email":
+		return p.Email
+	case "UserGroup":
+		return p.Group
+	case "Address":
+		return p.Address
+	case "City":
+		return p.City
+	case "Phone":
+		return p.Phone
+	case "Newsletter":
+		return p.Newsletter
+	case "Active":
+		return p.Status
+	case "ABNACN":
+		return p.ABNACN
+	case "BillFirstName":
+		return p.BillFirstName
+	case "BillLastName":
+		return p.BillLastName
+	case "BillCompany":
+		return p.BillCompany
+	case "BillStreetAddressLine1":
+		return p.BillAddress
+	case "BillCity":
+		return p.BillCity
+	case "BillState":
+		return p.BillState
+	case "BillPost Code":
+		return p.BillPostCode
+	case "BillCountry":
+		return p.BillCountry
+	case "ShipFirstName":
+		return p.ShipFirstName
+	case "ShipLastName":
+		return p.ShipLastName
+	case "ShipCompany":
+		return p.ShipCompany
+	case "ShipAddressLine1":
+		return p.ShipAddress
+	case "ShipCity":
+		return p.ShipCity
+	case "ShipState":
+		return p.ShipState
+	case "ShipPostCode":
+		return p.ShipPostCode
+	case "ShipCountry":
+		return p.ShipCountry
+	case "ShipPhone":
+		return p.ShipPhone
+	case "ShipAddressLine2":
+		return p.ShipAddress2
+	case "SecondaryEmailAddress":
+		return p.ShipEmail
+	case "InternalNotes":
+		return p.ShipNotes
+	case "DefaultShippingAddress":
+		return p.ShipDefault
+	default:
+		return nil
+	}
 }
 
 // INSERT INTO `oc_customer` (`customer_id`, `customer_group_id`, `store_id`, `language_id`, `firstname`, `lastname`, `email`, `telephone`, `fax`, `password`, `salt`, `cart`, `wishlist`, `newsletter`, `address_id`, `custom_field`, `ip`, `status`, `safe`, `token`, `code`, `date_added`) VALUES ('1', '3', '0', '0', '', '', 'bradv@abmresources.com.au', '', '', '', '', 'a:0:{}', '', '1', '75441', '', '0', '1', '0', '', '', '2017-11-02 03:00:06');
@@ -41,11 +106,11 @@ type CustomerRecord struct {
 func GetCustomerMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_customer",
-		ColumnOrder: []string{"customer_id", "customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added"},
+		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added"},
 		Fields: []FieldMapping{
 			{"Group", "customer_group_id", GetUserGroupID("Group")}, // note - need to pre-clean the data and add this field.
-			{"FirstName", "firstname", GetFirstName("FirstName", "Email")}, // use firstname as the default, email as backup
-			{"LastName", "lastname", GetLastName("Surname", "Email")}, // use lastname as the default, email as backup
+			{"", "firstname", JustUse("BillFirstName")},             // use firstname as the default, email as backup
+			{"", "lastname", JustUse("BillLastName")},               // use lastname as the default, email as backup
 			{"EmailAddress", "email", JustUse("Email")},
 			{"Phone", "telephone", JustUse("Phone")},
 			{"Status", "status", GetStatus("Status")},
@@ -57,3 +122,31 @@ func GetCustomerMapping() TableMapping {
 	}
 }
 
+func GetCustomerAddressMapping(customerIdMapping map[string]int) TableMapping {
+	return TableMapping{
+		TableName:   "oc_address",
+		ColumnOrder: []string{"customer_id", "firstname", "lastname", "company", "address_1", "address_2", "city", "postcode", "country_id", "zone_id"},
+		Fields: []FieldMapping{
+			{"", "customer_id", GetCustomerIdTransformation(customerIdMapping)},
+			{"", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
+			{"", "lastname", JustUse("BillLastName")},   // use lastname as the default, email as backup
+			{"BillCompany", "company", JustUse("BillCompany")},
+			{"BillAddress", "address_1", JustUse("BillAddress")},
+			{"", "address_2", JustUse("BillAddress2")},
+			{"BillCity", "city", JustUse("BillCity")},
+			{"BillPostCode", "postcode", JustUse("BillPostCode")},
+			{"BillCountry", "country_id", MapCountryToCode("BillCountry")},
+			{"", "zone_id", MapAustralianPostCodeToStateZoneID("BillPostCode")},
+		},
+	}
+}
+
+func GetCustomerIdTransformation(productIdMapping map[string]int) func(entity Entity) interface{} {
+	return func(entity Entity) interface{} {
+		model := entity.GetValue("Email").(string)
+		if id, exists := productIdMapping[model]; exists {
+			return strconv.Itoa(id)
+		}
+		return nil
+	}
+}

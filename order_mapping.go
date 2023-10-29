@@ -12,33 +12,33 @@ import (
 // INSERT INTO `oc_order` (`order_id`, `invoice_no`, `invoice_prefix`, `store_id`, `store_name`, `store_url`, `customer_id`, `customer_group_id`, `firstname`, `lastname`, `email`, `telephone`, `fax`, `custom_field`, `payment_firstname`, `payment_lastname`, `payment_company`, `payment_address_1`, `payment_address_2`, `payment_city`, `payment_postcode`, `payment_country`, `payment_country_id`, `payment_zone`, `payment_zone_id`, `payment_address_format`, `payment_custom_field`, `payment_method`, `payment_code`, `shipping_firstname`, `shipping_lastname`, `shipping_company`, `shipping_address_1`, `shipping_address_2`, `shipping_city`, `shipping_postcode`, `shipping_country`, `shipping_country_id`, `shipping_zone`, `shipping_zone_id`, `shipping_address_format`, `shipping_custom_field`, `shipping_method`, `shipping_code`, `comment`, `total`, `order_status_id`, `affiliate_id`, `commission`, `marketing_id`, `tracking`, `language_id`, `currency_id`, `currency_code`, `currency_value`, `ip`, `forwarded_ip`, `user_agent`, `accept_language`, `date_added`, `date_modified`) VALUES ('2', '0', ”, '0', 'Telco Antennas', 'https://telcoshop.nbembedded.com/', '9', '0', 'Daryl', 'Sowinski', 'dsowinski@bigpond.com', '419653781', ”, ”, 'Daryl', 'Sowinski', ”, '37 Diamantina Street', ”, 'Hillcrest', '4118', 'Australia', '13', ”, '0', ”, ”, 'Direct Deposit (EFT)', 'cod', 'Daryl', 'Sowinski', ”, '37 Diamantina Street', ”, 'Hillcrest', '4118', 'Australia', '13', ”, '0', ”, ”, 'Default shipping.', ”, ”, '46.8900', '7', '0', '0.0000', '0', ”, '1', '0', 'AUD', '1.00000000', ”, ”, ”, ”, '2011-02-22 03:25:29', '2018-07-02 02:07:06');
 // We want these two to match up, and ignore everything else.
 type OrderRecord struct {
-	OrderID              string `csv:"Order ID"`
-	OrderStatus          string `csv:"Order Status"`
-	Approved             string `csv:"Approved"`
+	OrderID     string `csv:"Order ID"`
+	OrderStatus string `csv:"Order Status"`
+	Approved    string `csv:"Approved"`
 
-	Email                string `csv:"Email"`
-	Telephone            string `csv:"Ship Phone"`
-	Fax                  string `csv:"Ship Fax"`
+	Email     string `csv:"Email"`
+	Telephone string `csv:"Ship Phone"`
+	Fax       string `csv:"Ship Fax"`
 
-	Firstname            string `csv:"Bill First Name"`
-	Lastname             string `csv:"Bill Last Name"`
-	PaymentCompany       string `csv:"Bill Company"`
-	PaymentAddress1      string `csv:"Bill Address Line 1"`
-	PaymentAddress2      string `csv:"Bill Address Line 2"`
-	PaymentCity          string `csv:"Bill City"`
-	PaymentState		 string `csv:"Bill State"`
-	PaymentPostcode      string `csv:"Bill Post Code"`
-	PaymentCountry       string `csv:"Bill Country"`
+	Firstname       string `csv:"Bill First Name"`
+	Lastname        string `csv:"Bill Last Name"`
+	PaymentCompany  string `csv:"Bill Company"`
+	PaymentAddress1 string `csv:"Bill Address Line 1"`
+	PaymentAddress2 string `csv:"Bill Address Line 2"`
+	PaymentCity     string `csv:"Bill City"`
+	PaymentState    string `csv:"Bill State"`
+	PaymentPostcode string `csv:"Bill Post Code"`
+	PaymentCountry  string `csv:"Bill Country"`
 
-	ShippingFirstname    string `csv:"Ship First Name"`
-	ShippingLastname     string `csv:"Ship Last Name"`
-	ShippingCompany      string `csv:"Ship Company"`
-	ShippingAddress1     string `csv:"Ship Address Line 1"`
-	ShippingAddress2     string `csv:"Ship Address Line 2"`
-	ShippingCity         string `csv:"Ship City"`
-	ShippingState 		 string `csv:"Ship State"`
-	ShippingPostcode     string `csv:"Ship Post Code"`
-	ShippingCountry      string `csv:"Ship Country"`
+	ShippingFirstname string `csv:"Ship First Name"`
+	ShippingLastname  string `csv:"Ship Last Name"`
+	ShippingCompany   string `csv:"Ship Company"`
+	ShippingAddress1  string `csv:"Ship Address Line 1"`
+	ShippingAddress2  string `csv:"Ship Address Line 2"`
+	ShippingCity      string `csv:"Ship City"`
+	ShippingState     string `csv:"Ship State"`
+	ShippingPostcode  string `csv:"Ship Post Code"`
+	ShippingCountry   string `csv:"Ship Country"`
 
 	PaymentMethod        string `csv:"Payment Method"`
 	ShippingMethod       string `csv:"Shipping Method"`
@@ -188,12 +188,12 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_order",
-		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_zone", "payment_zone_id", "payment_country", "payment_country_id",  "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_zone", "shipping_zone_id", "shipping_country", "shipping_country_id",  "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
+		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_zone", "payment_zone_id", "payment_country", "payment_country_id", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_zone", "shipping_zone_id", "shipping_country", "shipping_country_id", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
 		Fields: []FieldMapping{
 			// No need for order_id since it's managed by the database.
 			// As an example, here are a few more mappings:
 			{"", "order_id", StripNPrefix},
-			{"InvoiceNo", "invoice_no", StripNPrefix},
+			{"InvoiceNo", "invoice_no", JustUse("OrderID")},
 			{"", "store_id", func(entity Entity) interface{} { return "0" }}, // always use 0
 			{"CustomerID", "customer_id", MapCustomerEmailToID(customerEmailMapping)},
 			{"Firstname", "firstname", JustUse("PaymentFirstname")},
@@ -206,7 +206,7 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"PaymentAddress1", "payment_address_1", JustUse("PaymentAddress1")},
 			{"PaymentAddress2", "payment_address_2", JustUse("PaymentAddress2")},
 			{"PaymentCity", "payment_city", JustUse("PaymentCity")},
-			{"", "payment_zone", JustUse("PaymentState")}, // derive state from postcode
+			{"", "payment_zone", JustUse("PaymentState")},                                  // derive state from postcode
 			{"", "payment_zone_id", MapAustralianPostCodeToStateZoneID("PaymentPostcode")}, // derive state from postcode
 			{"PaymentPostcode", "payment_postcode", JustUse("PaymentPostcode")},
 			{"PaymentCountry", "payment_country", JustUse("PaymentCountry")},
@@ -219,7 +219,7 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"ShippingAddress1", "shipping_address_1", JustUse("ShippingAddress1")},
 			{"ShippingAddress2", "shipping_address_2", JustUse("ShippingAddress2")},
 			{"ShippingCity", "shipping_city", JustUse("ShippingCity")},
-			{"", "shipping_zone", JustUse("ShippingState")}, // derive state from postcode
+			{"", "shipping_zone", JustUse("ShippingState")},                                  // derive state from postcode
 			{"", "shipping_zone_id", MapAustralianPostCodeToStateZoneID("ShippingPostcode")}, // derive state from postcode
 			{"ShippingPostcode", "shipping_postcode", JustUse("ShippingPostcode")},
 			{"ShippingCountry", "shipping_country", JustUse("ShippingCountry")},

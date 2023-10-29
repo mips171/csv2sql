@@ -117,7 +117,7 @@ func GetProductMapping() TableMapping {
 		ColumnOrder: []string{"model", "sku", "location", "quantity",
 			"stock_status_id", "image", "manufacturer_id", "shipping", "price", "tax_class_id", "date_available",
 			"weight", "weight_class_id", "length", "width", "height", "length_class_id",
-			"subtract", "minimum", "sort_order", "status", "viewed",
+			"subtract", "minimum", "sort_order", "status",
 			"date_added", "date_modified"},
 		Fields: []FieldMapping{
 			{"Model", "model", ToUpperCase("Model")},
@@ -144,7 +144,6 @@ func GetProductMapping() TableMapping {
 			{"", "minimum", func(entity Entity) interface{} { return "1" }},    // Always 1 for "Yes"
 			{"", "sort_order", func(entity Entity) interface{} { return "1" }}, // Always 1 for "Yes"
 			{"Status", "status", MapProductStatus},
-			{"", "viewed", func(entity Entity) interface{} { return "0" }}, // Always 0 for "No"
 
 			{"DateAdded", "date_added", func(entity Entity) interface{} { return "2010-02-03 16:59:00" }},
 			{"DateModified", "date_modified", func(entity Entity) interface{} { return "2010-02-03 16:59:00" }},

@@ -10,16 +10,57 @@ import (
 func main() {
 
 	products()
-	// categories()
-	// orders()
+	categories()
+	orders()
+	customers()
 
 	fmt.Println("SQL file has been generated successfully.")
+}
+
+func customers() {
+
+	customerMapping := GetCustomerMapping()
+
+	// Open the file
+	file, err := os.OpenFile("./data/customer_export_full_20230815_111641_53870.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// Decode the CSV data
+	var customers []CustomerRecord
+	if err := gocsv.UnmarshalFile(file, &customers); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	sqlFile, err := os.Create("./data/import_customers.sql")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer sqlFile.Close()
+
+	customerIdMapping := make(map[string]int)
+	for index, product := range customers {
+		customerIdMapping[product.Email] = index + 1
+	}
+
+	entities := make([]Entity, len(customers))
+	for i, v := range customers {
+		entities[i] = v
+	}
+
+	processTable(customerMapping, entities, customerIdMapping, sqlFile)
+	processTable(GetCustomerAddressMapping(customerIdMapping), entities, customerIdMapping, sqlFile)
 }
 
 func categories() {
 
 	// Open the file
-	file, err := os.OpenFile("./data/product_cleaned.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile("./data/products_export_full_20230815_210049_71306.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
