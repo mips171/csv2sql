@@ -22,6 +22,8 @@ func GenerateInsertStatement(tableName string, columnOrder []string, entities []
 				value := field.MappingFunction(entity)
 				switch v := value.(type) {
 				case string:
+					// replace all \ with ""
+					v = strings.ReplaceAll(v, "\\", "")
 					rowValues = append(rowValues, fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")))
 				case int:
 					rowValues = append(rowValues, fmt.Sprintf("%d", v))
