@@ -79,7 +79,7 @@ func (p ProductRecord) GetValue(fieldName string) interface{} {
 		return p.Category
 	// Add other fields as required
 	default:
-		return nil
+		return ""
 	}
 }
 

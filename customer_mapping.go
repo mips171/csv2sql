@@ -13,7 +13,7 @@ type CustomerRecord struct {
 	BillFirstName string `csv:"Bill First Name"`
 	BillLastName  string `csv:"Bill Last Name"`
 	BillCompany   string `csv:"Bill Company"`
-	BillAddress   string `csv:"Bill Street Address Line 1"`
+	BillAddress1  string `csv:"Bill Street Address Line 1"`
 	BillAddress2  string `csv:"Bill Street Address Line 2"`
 	BillCity      string `csv:"Bill City"`
 	BillState     string `csv:"Bill State"`
@@ -45,7 +45,7 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 		return p.Phone
 	case "Newsletter":
 		return p.Newsletter
-	case "Active":
+	case "Status":
 		return p.Status
 	case "ABNACN":
 		return p.ABNACN
@@ -55,13 +55,15 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 		return p.BillLastName
 	case "BillCompany":
 		return p.BillCompany
-	case "BillStreetAddressLine1":
-		return p.BillAddress
+	case "BillAddress1":
+		return p.BillAddress1
+	case "BillAddress2":
+		return p.BillAddress2
 	case "BillCity":
 		return p.BillCity
 	case "BillState":
 		return p.BillState
-	case "BillPost Code":
+	case "BillPostCode":
 		return p.BillPostCode
 	case "BillCountry":
 		return p.BillCountry
@@ -92,7 +94,7 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 	case "DefaultShippingAddress":
 		return p.ShipDefault
 	default:
-		return nil
+		return ""
 	}
 }
 
@@ -131,7 +133,7 @@ func GetCustomerAddressMapping(customerIdMapping map[string]int) TableMapping {
 			{"BillCity", "city", JustUse("BillCity")},
 			{"BillPostCode", "postcode", JustUse("BillPostCode")},
 			{"BillCountry", "country_id", MapCountryToCode("BillCountry")},
-			{"", "zone_id", MapAustralianPostCodeToStateZoneID("BillPostcode")}, // derive state from postcode
+			{"", "zone_id", MapAustralianPostCodeToStateZoneID("BillPostCode")}, // derive state from postcode
 		},
 	}
 }

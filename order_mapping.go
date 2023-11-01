@@ -178,7 +178,7 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 		}
 		return strings.Join(comments, "\n")
 	default:
-		return nil
+		return ""
 	}
 }
 

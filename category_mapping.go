@@ -21,7 +21,7 @@ func (c CategoryRecord) GetValue(fieldName string) interface{} {
 	case "Category":
 		return c.Category
 	default:
-		return nil
+		return ""
 	}
 }
 
