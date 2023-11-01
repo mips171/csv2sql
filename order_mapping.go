@@ -252,7 +252,7 @@ func GetOrderProductMapping(productIdMapping map[string]int) TableMapping {
 			{"OrderLineDescription", "name", JustUse("OrderLineDescription")},
 			{"OrderLineSKU", "model", JustUse("OrderLineSKU")}, // Assuming SKU is also the model.
 			{"OrderLineQty", "quantity", JustUse("OrderLineQty")},
-			{"OrderLineUnitPrice", "price", JustUse("OrderLineUnitPrice")},
+			{"OrderLineUnitPrice", "price", CalculateOrderLineExGST},
 			// For fields like "total", "tax", and "reward" you might need to calculate values or define new mapping functions.
 			{"ProductTotal", "total", CalculateTotal},
 			{"ProductTax", "tax", CalculateTax},
@@ -302,45 +302,71 @@ func MapSKUToProductID(productIdMapping map[string]int) func(entity Entity) inte
 	}
 }
 
+func CalculateOrderLineExGST(entity Entity) interface{} {
+	priceStr := entity.GetValue("OrderLineUnitPrice").(string)
+
+	// Convert the string values to decimals
+	priceDec, err := decimal.NewFromString(priceStr)
+
+	// Handle potential conversion errors
+	if err != nil {
+		fmt.Printf("Error converting price or quantity to decimal: %v\n", err)
+		panic("Error converting price or quantity to decimal")
+	}
+
+	// Calculate total excluding GST
+	taxDivisor := decimal.NewFromFloat(1.1)        // 10% GST
+	exGSTPrice := priceDec.DivRound(taxDivisor, 4) // Divide price by 1.1 to get ex-GST price, rounded to 4 decimal places
+
+	// Convert total to string with 4 decimal places
+	return exGSTPrice.StringFixed(4)
+}
+
 // These are placeholder functions, you'd have to implement logic to calculate these.
 func CalculateTotal(entity Entity) interface{} {
 	priceStr := entity.GetValue("OrderLineUnitPrice").(string)
 	qtyStr := entity.GetValue("OrderLineQty").(string)
 
-	// Convert the string values to float64 and int respectively
-	price, err1 := strconv.ParseFloat(priceStr, 64)
-	qty, err2 := strconv.Atoi(qtyStr)
+	// Convert the string values to decimals
+	priceDec, err1 := decimal.NewFromString(priceStr)
+	qtyDec, err2 := decimal.NewFromString(qtyStr)
 
 	// Handle potential conversion errors
 	if err1 != nil || err2 != nil {
-		fmt.Printf("Error converting price or quantity to number: %v, %v\n", err1, err2)
-		panic("Error converting price or quantity to number")
+		fmt.Printf("Error converting price or quantity to decimal: %v, %v\n", err1, err2)
+		panic("Error converting price or quantity to decimal")
 	}
 
-	total := price * float64(qty)
+	// Calculate total excluding GST
+	taxDivisor := decimal.NewFromFloat(1.1)        // 10% GST
+	exGSTPrice := priceDec.DivRound(taxDivisor, 4) // Divide price by 1.1 to get ex-GST price, rounded to 4 decimal places
+	total := exGSTPrice.Mul(qtyDec)
 
 	// Convert total to string with 4 decimal places
-	return fmt.Sprintf("%.4f", total)
+	return total.StringFixed(4)
 }
 
 func CalculateTax(entity Entity) interface{} {
 	// Retrieve the price as a string
 	priceStr := entity.GetValue("OrderLineUnitPrice").(string)
 
-	// Convert the string to float64
-	price, err := strconv.ParseFloat(priceStr, 64)
+	// Convert the string to decimal
+	priceDec, err := decimal.NewFromString(priceStr)
 
 	// Handle potential conversion errors
 	if err != nil {
-		fmt.Printf("Error converting price to number: %v\n", err)
+		fmt.Printf("Error converting price to decimal: %v\n", err)
 		return "ERROR" // or handle this more gracefully, depending on your needs
 	}
 
 	// Calculate the tax (10% in this example)
-	tax := price * 0.1
+	taxRate := decimal.NewFromFloat(0.1)
+	taxDivisor := decimal.NewFromFloat(1.1)        // 10% GST
+	exGSTPrice := priceDec.DivRound(taxDivisor, 4) // Divide price by 1.1 to get ex-GST price, rounded to 4 decimal places
+	tax := priceDec.Sub(exGSTPrice).Mul(taxRate)   // Calculate tax
 
 	// Convert tax to string with 4 decimal places
-	return fmt.Sprintf("%.4f", tax)
+	return tax.StringFixed(4)
 }
 
 func CalculateReward(entity Entity) interface{} {
@@ -356,7 +382,7 @@ func GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxVa
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%s', 1);", orderID, subTotalLessShipping.StringFixedBank(4)),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%s', 3);", orderID, shippingCost),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%s', 6);", orderID, totalValue),
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'VAT', '%s', 5);", orderID, taxValue),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'GST', '%s', 5);", orderID, taxValue),
 	}
 
 	return statements
@@ -423,7 +449,7 @@ func CalculateOrderTotals(lineItems []OrderRecord) (subTotalValue, shippingCost,
 	}
 
 	// Compute the total value
-	totalValue = subTotalValue.Add(shippingCost).Add(taxValue)
+	totalValue = subTotalValue.Add(shippingCost)
 	return
 }
 
