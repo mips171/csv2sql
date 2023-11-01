@@ -219,6 +219,7 @@ func orders() {
 	// Process each group of line items per order
 	for orderID, lineItems := range orderLineItemsMap {
 		subTotalValue, shippingCost, taxValue, totalValue := CalculateOrderTotals(lineItems)
+		orderID = normalizeOrderID(orderID)
 		sqlStatements := GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue)
 		for _, stmt := range sqlStatements {
 			sqlFile.WriteString(stmt + "\n")

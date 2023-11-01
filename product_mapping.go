@@ -320,7 +320,7 @@ func FormatPriceToFourDecimalPlaces(price string) interface{} {
 }
 
 func GetTaxClassID(entity Entity) interface{} {
-	taxFreeItem, _ := entity.GetValue("Tax Free Item").(string)
+	taxFreeItem, _ := entity.GetValue("TaxFreeItem").(string)
 
 	// Check if the item is a tax-free item
 	if taxFreeItem == "y" {

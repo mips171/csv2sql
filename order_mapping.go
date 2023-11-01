@@ -383,7 +383,7 @@ func CalculateOrderTotals(lineItems []OrderRecord) (subTotalValue float64, shipp
 	taxRate := 0.1
 
 	for _, lineItem := range lineItems {
-		isTaxFree := lineItem.OrderLineTaxFree == "y"
+		isTaxFree := strings.Contains(lineItem.OrderLineTaxFree, "y")
 		lineItemTaxRate := taxRate
 		if isTaxFree {
 			lineItemTaxRate = 0.0
