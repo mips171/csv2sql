@@ -231,7 +231,7 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"OrderStatus", "order_status_id", MapOrderStatusID},
 			{"DateAdded", "date_added", JustUse("DateAdded")},
 			{"DateModified", "date_modified", JustUse("DateModified")},
-			{"", "currency_id", func(entity Entity) interface{} { return "4" }},             // Default currency ID for AUD
+			{"", "currency_id", func(entity Entity) interface{} { return "1" }},             // Default currency ID for AUD
 			{"", "currency_code", func(entity Entity) interface{} { return "AUD" }},         // Default currency code for AUD
 			{"", "currency_value", func(entity Entity) interface{} { return "1.00000000" }}, // Default currency value for AUD
 		},
