@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 // This EntityRecord struct maps from CSV to a struct
@@ -80,33 +81,6 @@ func (p ProductRecord) GetValue(fieldName string) interface{} {
 	// Add other fields as required
 	default:
 		return ""
-	}
-}
-
-// This function maps from a ProductRecord to a map of strings
-func productToMap(product ProductRecord) map[string]string {
-	return map[string]string{
-		"Model":              product.Model,
-		"SKU":                product.Model,
-		"Name":               product.Name,
-		"Description":        product.Description,
-		"SEOPagetitle":       product.SEOPagetitle,
-		"SEOMetaDescription": product.SEOMetaDescription,
-		"SEOMetaKeywords":    product.SEOMetaKeywords,
-		"Price":              product.Price,
-		"TradePrice":         product.TradePrice,
-		"Cost":               product.Cost,
-		"Quantity":           product.Quantity,
-		"Length":             product.Length,
-		"Width":              product.Width,
-		"Height":             product.Height,
-		"Weight":             product.Weight,
-		"TaxClassId":         product.TaxClassId,
-		"Status":             product.Status,
-		"DateAdded":          product.DateAdded,
-		"DateModified":       product.DateModified,
-		"Image":              product.Model,
-		"Category":           product.Category,
 	}
 }
 
@@ -255,68 +229,56 @@ func MapSkuToProductId(entity Entity) interface{} {
 }
 
 func GetRetailPrice(entity Entity) interface{} {
-	retailPrice := entity.GetValue("Price").(string)
-	tradePrice := entity.GetValue("TradePrice").(string)
-
-	// Default to retail price
-	if retailPrice != "" {
-		formattedRetailPrice := FormatPriceToFourDecimalPlaces(retailPrice)
-		if formattedRetailPrice != "0.0000" {
-			return formattedRetailPrice
-		}
+	retailPrice, ok := entity.GetValue("Price").(string)
+	if !ok || retailPrice == "" {
+		return "0.0000"
 	}
 
-	// Check and format trade price
-	if tradePrice != "" {
-		formattedTradePrice := FormatPriceToFourDecimalPlaces(tradePrice)
-		if formattedTradePrice != "0.0000" {
-			return formattedTradePrice
-		}
+	return removeGSTandFormat(retailPrice)
+}
+
+func removeGSTandFormat(price string) string {
+	priceDec, err := decimal.NewFromString(price)
+	if err != nil {
+		return "0.0000" // Return default value if conversion fails
 	}
 
-	// If neither trade nor retail prices are valid, return "0.0000"
-	return "0.0000"
+	// Reverse the 10% GST
+	gstRate := decimal.NewFromFloat(1.10) // GST is 10%, so we divide by 1 + 0.10
+	exGSTPrice := priceDec.DivRound(gstRate, 4)
+
+	// Format to string with four decimal places
+	return exGSTPrice.StringFixed(4)
 }
 
 func GetTradePrice(entity Entity) interface{} {
-	retailPrice := entity.GetValue("Price").(string)
-	tradePrice := entity.GetValue("TradePrice").(string)
+	tradePrice, okTrade := entity.GetValue("TradePrice").(string)
+	retailPrice, okRetail := entity.GetValue("Price").(string)
 
-	// Check and format trade price
-	if tradePrice != "" {
-		formattedTradePrice := FormatPriceToFourDecimalPlaces(tradePrice)
+	if okTrade && tradePrice != "" {
+		formattedTradePrice := removeGSTandFormat(tradePrice)
 		if formattedTradePrice != "0.0000" {
 			return formattedTradePrice
 		}
 	}
 
-	// Default to retail price
-	if retailPrice != "" {
-		formattedRetailPrice := FormatPriceToFourDecimalPlaces(retailPrice)
+	if okRetail && retailPrice != "" {
+		formattedRetailPrice := removeGSTandFormat(retailPrice)
 		if formattedRetailPrice != "0.0000" {
 			return formattedRetailPrice
 		}
 	}
 
-	// If neither trade nor retail prices are valid, return "0.0000"
 	return "0.0000"
 }
 
 func FormatPriceToFourDecimalPlaces(price string) interface{} {
-	// Split the price at the decimal
-	parts := strings.Split(price, ".")
-
-	// If there's no decimal
-	if len(parts) == 1 {
-		return price + ".0000"
+	priceDec, err := decimal.NewFromString(price)
+	if err != nil {
+		return "0.0000" // Return default value if conversion fails
 	}
 
-	// If there's a decimal, pad it out to four places
-	for len(parts[1]) < 4 {
-		parts[1] += "0"
-	}
-
-	return parts[0] + "." + parts[1][:4] // Return the formatted price
+	return priceDec.StringFixed(4)
 }
 
 func GetTaxClassID(entity Entity) interface{} {

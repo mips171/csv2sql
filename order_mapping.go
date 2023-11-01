@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 // CSV Headers, need to match OrderRecord deserialization
@@ -346,15 +348,17 @@ func CalculateReward(entity Entity) interface{} {
 	return "0.0000" // Assuming no reward
 }
 
-func GenerateOrderTotalSQLStatements(orderID string, subTotalValue, shippingCost, taxValue, totalValue float64) []string {
+func GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue string) []string {
+	x, _ := decimal.NewFromString(subTotalValue)
+	y, _ := decimal.NewFromString(shippingCost)
+	subTotalLessShipping := x.Sub(y)
 	statements := []string{
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%.4f', 1);", orderID, subTotalValue-shippingCost),
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%.4f', 3);", orderID, shippingCost),
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%.4f', 6);", orderID, totalValue),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%s', 1);", orderID, subTotalLessShipping.StringFixedBank(4)),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%s', 3);", orderID, shippingCost),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%s', 6);", orderID, totalValue),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'VAT', '%s', 5);", orderID, taxValue),
 	}
-	if taxValue > 0 {
-		statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'VAT', '%.4f', 5);", orderID, taxValue))
-	}
+
 	return statements
 }
 
@@ -377,41 +381,49 @@ func safeToFloat(value interface{}) float64 {
 	return 0.0
 }
 
-func CalculateOrderTotals(lineItems []OrderRecord) (subTotalValue float64, shippingCost float64, taxValue float64, totalValue float64) {
-	// Assume taxRate is constant for all line items or defined outside this function.
-	// If taxRate needs to be retrieved from each line item, it should be handled within the loop.
-	taxRate := 0.1
+func CalculateOrderTotals(lineItems []OrderRecord) (subTotalValue, shippingCost, taxValue, totalValue decimal.Decimal) {
 
-	for _, lineItem := range lineItems {
-		isTaxFree := strings.Contains(lineItem.OrderLineTaxFree, "y")
-		lineItemTaxRate := taxRate
-		if isTaxFree {
-			lineItemTaxRate = 0.0
+	taxDivisor := decimal.NewFromFloat(1.1) // Divisor to remove GST
+
+	for _, item := range lineItems {
+		// Parse price and quantity to decimal
+		price, err := decimal.NewFromString(item.OrderLineUnitPrice)
+		if err != nil {
+			price = decimal.Zero // Handle the error as appropriate
+		}
+		quantity, err := decimal.NewFromString(item.OrderLineQty)
+		if err != nil {
+			quantity = decimal.Zero // Handle the error as appropriate
 		}
 
-		// Calculate sub-total for each line item
-		price := safeToFloat(lineItem.OrderLineUnitPrice)
-		quantity := safeToFloat(lineItem.OrderLineQty)
-		subTotalItem := price * quantity
+		// Remove GST from the price by dividing by taxDivisor (1 + taxRate)
+		exGSTPrice := price.Div(taxDivisor)
 
-		// Calculate total sub-total by summing all line item sub-totals
-		subTotalValue += subTotalItem
+		// Compute the sub-total for the current item
+		subTotalItem := exGSTPrice.Mul(quantity)
+		subTotalValue = subTotalValue.Add(subTotalItem)
 
-		// Calculate tax for each line item and sum for total tax
-		taxValue += subTotalItem * lineItemTaxRate
+		// Determine if the item is tax-free
+		itemTaxValue := decimal.Zero
+		if !strings.Contains(item.OrderLineTaxFree, "y") {
+			// Compute the tax for the current item (tax was already included in the price)
+			itemTaxValue = price.Sub(exGSTPrice).Mul(quantity)
+			taxValue = taxValue.Add(itemTaxValue)
+		}
 	}
 
-	// Assuming shipping cost is the same for all line items of an order,
-	// so we take it from the first line item.
-	// If different line items have different shipping costs,
-	// this needs to be calculated in a different manner.
+	// Assuming shipping cost is same for all line items, take from first item
 	if len(lineItems) > 0 {
-		shippingCost = safeToFloat(lineItems[0].ShippingCost)
+		shippingCostParsed, err := decimal.NewFromString(lineItems[0].ShippingCost)
+		if err != nil {
+			shippingCost = decimal.Zero // Handle the error as appropriate
+		} else {
+			shippingCost = shippingCostParsed
+		}
 	}
 
-	// The total value is the sum of the sub-total value, shipping cost, and total tax.
-	totalValue = subTotalValue + shippingCost + taxValue
-
+	// Compute the total value
+	totalValue = subTotalValue.Add(shippingCost).Add(taxValue)
 	return
 }
 
