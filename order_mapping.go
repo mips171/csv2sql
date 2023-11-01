@@ -43,7 +43,7 @@ type OrderRecord struct {
 	PaymentMethod        string `csv:"Payment Method"`
 	ShippingMethod       string `csv:"Shipping Method"`
 	ShippingCost         string `csv:"Shipping Cost"`
-	Total                string `csv:"Amount Paid"`
+	Total                string
 	PaymentCode          string // this will need to be mapped based on PaymentMethod, not present in CSV
 	ShippingCode         string // this will need to be mapped based on ShippingMethod, not present in CSV
 	CurrencyCode         string `csv:"Currency Code"`
