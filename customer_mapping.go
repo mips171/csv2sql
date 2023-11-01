@@ -117,7 +117,7 @@ func GetCustomerMapping() TableMapping {
 			{"", "date_added", GetDateAdded()},
 			{"", "store_id", func(entity Entity) interface{} { return "0" }},
 			{"", "language_id", func(entity Entity) interface{} { return "0" }},
-			{"", "safe", GetSafeStatus("OnCreditHold")}, // default to not safe
+			{"", "safe", GetSafeStatus("OnCreditHold")},
 		},
 	}
 }
