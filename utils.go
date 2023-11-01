@@ -22,7 +22,8 @@ func GetUserGroupID(fieldName string) func(Entity) interface{} {
 
 func GetNewsletterStatus(subscriberStatus string) func(Entity) interface{} {
 	return func(entity Entity) interface{} {
-		if subscriberStatus == "y" {
+		newsletterStatus := entity.GetValue("Newsletter")
+		if strings.Contains("y", newsletterStatus.(string)) {
 			return "1"
 		}
 		return "0"
@@ -31,7 +32,8 @@ func GetNewsletterStatus(subscriberStatus string) func(Entity) interface{} {
 
 func GetStatus(activeStatus string) func(Entity) interface{} {
 	return func(entity Entity) interface{} {
-		if activeStatus == "y" {
+		activeStatus := entity.GetValue("Status")
+		if strings.Contains("y", activeStatus.(string)) {
 			return "1"
 		}
 		return "0"
