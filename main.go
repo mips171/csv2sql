@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	PRODUCTS_CSV  = "./data/products_export_full_20231101_114741_67572.csv"
-	CUSTOMERS_CSV = "./data/customer_export_full_20231101_114614_40007.csv"
-	ORDERS_CSV    = "./data/orders_export_full_20231101_114706_57298.csv"
+	PRODUCTS_CSV        = "./data/products_export_full_20231101_114741_67572.csv"
+	CUSTOMERS_CSV       = "./data/customer_export_full_20231101_114614_40007.csv"
+	CUSTOMER_GROUPS_CSV = "./data/customer_groups.csv"
+	ORDERS_CSV          = "./data/orders_export_full_20231101_114706_57298.csv"
 
 	OUTPUT_CUSTOMERS_SQL  = "./data/import_customers.sql"
 	OUTPUT_CATEGORIES_SQL = "./data/import_categories.sql"
@@ -45,6 +46,29 @@ func customers() {
 	if err := gocsv.UnmarshalFile(file, &customers); err != nil {
 		fmt.Println("Error:", err)
 		return
+	}
+
+	// Open the file
+	groupsFile, err := os.OpenFile(CUSTOMER_GROUPS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer groupsFile.Close()
+
+	var customerGroups []CustomerGroupRecord
+	if err := gocsv.UnmarshalFile(groupsFile, &customerGroups); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	for i := range customers {
+		for _, group := range customerGroups {
+			if customers[i].Username == group.Username {
+				customers[i].Group = group.Group
+				fmt.Printf("Set Customer %s to group %s\n", customers[i].Email, customers[i].Group)
+			}
+		}
 	}
 
 	sqlFile, err := os.Create(OUTPUT_CUSTOMERS_SQL)
