@@ -7,6 +7,17 @@ import (
 	"github.com/gocarina/gocsv"
 )
 
+const (
+	PRODUCTS_CSV  = "./data/products_export_full_20231101_114741_67572.csv"
+	CUSTOMERS_CSV = "./data/customer_export_full_20231101_114614_40007.csv"
+	ORDERS_CSV    = "./data/orders_export_full_20231101_114706_57298.csv"
+
+	OUTPUT_CUSTOMERS_SQL  = "./data/import_customers.sql"
+	OUTPUT_CATEGORIES_SQL = "./data/import_categories.sql"
+	OUTPUT_ORDERS_SQL     = "./data/import_orders.sql"
+	OUTPUT_PRODUCTS_SQL   = "./data/import_products.sql"
+)
+
 func main() {
 
 	products()
@@ -22,7 +33,7 @@ func customers() {
 	customerMapping := GetCustomerMapping()
 
 	// Open the file
-	file, err := os.OpenFile("./data/customer_export_full_20230815_111641_53870.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile(CUSTOMERS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -36,7 +47,7 @@ func customers() {
 		return
 	}
 
-	sqlFile, err := os.Create("./data/import_customers.sql")
+	sqlFile, err := os.Create(OUTPUT_CUSTOMERS_SQL)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -60,7 +71,7 @@ func customers() {
 func categories() {
 
 	// Open the file
-	file, err := os.OpenFile("./data/products_export_full_20230815_210049_71306.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile(PRODUCTS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -74,7 +85,7 @@ func categories() {
 		return
 	}
 
-	sqlFile, err := os.Create("./data/import_categories.sql")
+	sqlFile, err := os.Create(OUTPUT_CATEGORIES_SQL)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -96,7 +107,7 @@ func categories() {
 func orders() {
 
 	// Open the ordersFile
-	ordersFile, err := os.OpenFile("./data/orders_export_full_20230921_210540_36657.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	ordersFile, err := os.OpenFile(ORDERS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -110,7 +121,7 @@ func orders() {
 		return
 	}
 
-	sqlFile, err := os.Create("./data/import_orders.sql")
+	sqlFile, err := os.Create(OUTPUT_ORDERS_SQL)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -128,7 +139,7 @@ func orders() {
 	}
 
 	// Open the product CSV file
-	productFile, err := os.OpenFile("./data/products_export_full_20230815_210049_71306.csv", os.O_RDWR, os.ModePerm)
+	productFile, err := os.OpenFile(PRODUCTS_CSV, os.O_RDWR, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -149,7 +160,7 @@ func orders() {
 
 	// map customer email to ID
 	// Open the product CSV file
-	customersFile, err := os.OpenFile("./data/customer_export_full_20230815_111641_53870.csv", os.O_RDWR, os.ModePerm)
+	customersFile, err := os.OpenFile(CUSTOMERS_CSV, os.O_RDWR, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -194,7 +205,7 @@ func products() {
 	productMapping := GetProductMapping()
 
 	// Open the file
-	file, err := os.OpenFile("./data/products_export_full_20230815_210049_71306.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile(PRODUCTS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -208,7 +219,7 @@ func products() {
 		return
 	}
 
-	sqlFile, err := os.Create("./data/import_products.sql")
+	sqlFile, err := os.Create(OUTPUT_PRODUCTS_SQL)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
