@@ -377,30 +377,42 @@ func safeToFloat(value interface{}) float64 {
 	return 0.0
 }
 
-func CalculateOrderTotals(entity Entity) (float64, float64, float64, float64) {
+func CalculateOrderTotals(lineItems []OrderRecord) (subTotalValue float64, shippingCost float64, taxValue float64, totalValue float64) {
+	// Assume taxRate is constant for all line items or defined outside this function.
+	// If taxRate needs to be retrieved from each line item, it should be handled within the loop.
 	taxRate := 0.1
-	if entity.GetValue("OrderLineTaxFree") == "y" {
-		taxRate = 0.0
+
+	for _, lineItem := range lineItems {
+		isTaxFree := lineItem.OrderLineTaxFree == "y"
+		lineItemTaxRate := taxRate
+		if isTaxFree {
+			lineItemTaxRate = 0.0
+		}
+
+		// Calculate sub-total for each line item
+		price := safeToFloat(lineItem.OrderLineUnitPrice)
+		quantity := safeToFloat(lineItem.OrderLineQty)
+		subTotalItem := price * quantity
+
+		// Calculate total sub-total by summing all line item sub-totals
+		subTotalValue += subTotalItem
+
+		// Calculate tax for each line item and sum for total tax
+		taxValue += subTotalItem * lineItemTaxRate
 	}
 
-	// Calculate sub-total for the line item
-	price := safeToFloat(entity.GetValue("OrderLineUnitPrice"))
-	quantity := safeToFloat(entity.GetValue("OrderLineQty"))
-	subTotalItem := price * quantity
+	// Assuming shipping cost is the same for all line items of an order,
+	// so we take it from the first line item.
+	// If different line items have different shipping costs,
+	// this needs to be calculated in a different manner.
+	if len(lineItems) > 0 {
+		shippingCost = safeToFloat(lineItems[0].ShippingCost)
+	}
 
-	// Calculate total sub-total (might include more line items in reality)
-	subTotalValue := subTotalItem
+	// The total value is the sum of the sub-total value, shipping cost, and total tax.
+	totalValue = subTotalValue + shippingCost + taxValue
 
-	// Add ShippingCost to the sub-total
-	shippingCost := safeToFloat(entity.GetValue("ShippingCost"))
-	subTotalValue += shippingCost
-
-	// Calculate tax on the sub-total
-	taxValue := subTotalItem * taxRate
-
-	totalValue := subTotalValue + taxValue
-
-	return subTotalValue, shippingCost, taxValue, totalValue
+	return
 }
 
 func MapTitle(entity Entity) interface{} {

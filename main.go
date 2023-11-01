@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gocarina/gocsv"
 )
@@ -66,7 +67,6 @@ func customers() {
 		for _, group := range customerGroups {
 			if customers[i].Username == group.Username {
 				customers[i].Group = group.Group
-				fmt.Printf("Set Customer %s to group %s\n", customers[i].Email, customers[i].Group)
 			}
 		}
 	}
@@ -203,6 +203,11 @@ func orders() {
 		customerIdMapping[cust.Email] = index + 1
 	}
 
+	orderLineItemsMap := make(map[string][]OrderRecord)
+	for _, order := range orders {
+		orderLineItemsMap[order.OrderID] = append(orderLineItemsMap[order.OrderID], order)
+	}
+
 	orderMapping := GetOrderMapping(customerIdMapping)
 
 	// Use the helper function for each mapping
@@ -211,13 +216,10 @@ func orders() {
 
 	sqlFile.WriteString("TRUNCATE TABLE `oc_order_total`;\n")
 
-	// processTable(GetOrderTotalMapping(orderIDMapping), entities, orderIDMapping, sqlFile)
-	for _, record := range orders { // assuming orderRecords is a slice of OrderRecord
-		orderID := record.OrderID
-		subTotalValue, shippingCost, taxValue, totalValue := CalculateOrderTotals(record)
-
+	// Process each group of line items per order
+	for orderID, lineItems := range orderLineItemsMap {
+		subTotalValue, shippingCost, taxValue, totalValue := CalculateOrderTotals(lineItems)
 		sqlStatements := GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue)
-
 		for _, stmt := range sqlStatements {
 			sqlFile.WriteString(stmt + "\n")
 		}
@@ -271,8 +273,13 @@ func products() {
 
 func processTable(tableMapping TableMapping, entities []Entity, productIdMapping map[string]int, sqlFile *os.File) {
 	sqlFile.WriteString("TRUNCATE TABLE `" + tableMapping.TableName + "`;\n")
-	insertStatements := GenerateInsertStatement(tableMapping.TableName, tableMapping.ColumnOrder, entities, tableMapping.Fields, "Model", productIdMapping)
+	insertStatements := GenerateInsertStatement(tableMapping.TableName, tableMapping.ColumnOrder, entities, tableMapping.Fields)
 	for _, stmt := range insertStatements {
 		sqlFile.WriteString(stmt + "\n")
 	}
+}
+
+func normalizeOrderID(orderID string) string {
+	// FIXME: Replace with proper normalization logic if needed
+	return strings.ReplaceAll(orderID, "N", "")
 }
