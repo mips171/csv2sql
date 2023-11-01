@@ -6,8 +6,6 @@ import "strconv"
 type CustomerRecord struct {
 	Email         string `csv:"Email Address"`
 	Group         string `csv:"User Group"`
-	Address       string `csv:"Address"`
-	City          string `csv:"City"`
 	Phone         string `csv:"Bill Phone"`
 	Newsletter    string `csv:"Newsletter Subscriber"`
 	Status        string `csv:"Active"`
@@ -16,6 +14,7 @@ type CustomerRecord struct {
 	BillLastName  string `csv:"Bill Last Name"`
 	BillCompany   string `csv:"Bill Company"`
 	BillAddress   string `csv:"Bill Street Address Line 1"`
+	BillAddress2  string `csv:"Bill Street Address Line 2"`
 	BillCity      string `csv:"Bill City"`
 	BillState     string `csv:"Bill State"`
 	BillPostCode  string `csv:"Bill Post Code"`
@@ -42,10 +41,6 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 		return p.Email
 	case "UserGroup":
 		return p.Group
-	case "Address":
-		return p.Address
-	case "City":
-		return p.City
 	case "Phone":
 		return p.Phone
 	case "Newsletter":
@@ -108,10 +103,10 @@ func GetCustomerMapping() TableMapping {
 		TableName:   "oc_customer",
 		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added"},
 		Fields: []FieldMapping{
-			{"Group", "customer_group_id", GetUserGroupID("Group")}, // note - need to pre-clean the data and add this field.
-			{"", "firstname", JustUse("BillFirstName")},             // use firstname as the default, email as backup
-			{"", "lastname", JustUse("BillLastName")},               // use lastname as the default, email as backup
-			{"EmailAddress", "email", JustUse("Email")},
+			{"Group", "customer_group_id", GetUserGroupID("Group")},  // note - need to pre-clean the data and add this field.
+			{"BillFirstName", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
+			{"BillLastName", "lastname", JustUse("BillLastName")},    // use lastname as the default, email as backup
+			{"Email", "email", JustUse("Email")},
 			{"Phone", "telephone", JustUse("Phone")},
 			{"Status", "status", GetStatus("Status")},
 			{"Newsletter", "newsletter", GetNewsletterStatus("Newsletter")},
@@ -128,15 +123,15 @@ func GetCustomerAddressMapping(customerIdMapping map[string]int) TableMapping {
 		ColumnOrder: []string{"customer_id", "firstname", "lastname", "company", "address_1", "address_2", "city", "postcode", "country_id", "zone_id"},
 		Fields: []FieldMapping{
 			{"", "customer_id", GetCustomerIdTransformation(customerIdMapping)},
-			{"", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
-			{"", "lastname", JustUse("BillLastName")},   // use lastname as the default, email as backup
+			{"BillFirstName", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
+			{"BillLastName", "lastname", JustUse("BillLastName")},    // use lastname as the default, email as backup
 			{"BillCompany", "company", JustUse("BillCompany")},
 			{"BillAddress", "address_1", JustUse("BillAddress")},
-			{"", "address_2", JustUse("BillAddress2")},
+			{"BillAddress2", "address_2", JustUse("BillAddress2")},
 			{"BillCity", "city", JustUse("BillCity")},
 			{"BillPostCode", "postcode", JustUse("BillPostCode")},
 			{"BillCountry", "country_id", MapCountryToCode("BillCountry")},
-			{"", "zone_id", MapAustralianPostCodeToStateZoneID("BillPostCode")},
+			{"", "zone_id", MapAustralianPostCodeToStateZoneID("BillPostcode")}, // derive state from postcode
 		},
 	}
 }
