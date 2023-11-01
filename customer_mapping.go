@@ -36,6 +36,7 @@ type CustomerRecord struct {
 	ShipCountry      string `csv:"Ship Country"`
 	ShipPhone        string `csv:"Ship Phone"`
 	ShipNotes        string `csv:"Internal Notes"`
+	OnCreditHold     string `csv:"On Credit Hold"`
 	//... any other fields your CSV might have.
 }
 
@@ -93,19 +94,20 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 		return p.ShipPhone
 	case "InternalNotes":
 		return p.ShipNotes
+	case "OnCreditHold":
+		return p.OnCreditHold
 	default:
 		return ""
 	}
 }
 
-// INSERT INTO `oc_customer` (`customer_id`, `customer_group_id`, `store_id`, `language_id`, `firstname`, `lastname`, `email`, `telephone`, `fax`, `password`, `salt`, `cart`, `wishlist`, `newsletter`, `address_id`, `custom_field`, `ip`, `status`, `safe`, `token`, `code`, `date_added`) VALUES ('1', '3', '0', '0', '', '', 'bradv@abmresources.com.au', '', '', '', '', 'a:0:{}', '', '1', '75441', '', '0', '1', '0', '', '', '2017-11-02 03:00:06');
-
+// INSERT INTO `oc_customer` (`customer_id`, `customer_group_id`, `store_id`, `language_id`, `firstname`, `lastname`, `email`, `telephone`, `fax`, `password`, `salt`, `cart`, `wishlist`, `newsletter`, `address_id`, `custom_field`, `ip`, `status`, `safe`, `token`, `code`, `date_added`) VALUES ('1', '3', '0', '0', ”, ”, 'bradv@abmresources.com.au', ”, ”, ”, ”, 'a:0:{}', ”, '1', '75441', ”, '0', '1', '0', ”, ”, '2017-11-02 03:00:06');
 func GetCustomerMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_customer",
-		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added", "store_id", "language_id"},
+		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added", "store_id", "language_id", "safe"},
 		Fields: []FieldMapping{
-			{"Group", "customer_group_id", GetUserGroupID("Group")},  // note - need to pre-clean the data and add this field.
+			{"Group", "customer_group_id", GetUserGroupID("Group")},  // note - merged in main.go
 			{"BillFirstName", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
 			{"BillLastName", "lastname", JustUse("BillLastName")},    // use lastname as the default, email as backup
 			{"Email", "email", JustUse("Email")},
@@ -115,6 +117,7 @@ func GetCustomerMapping() TableMapping {
 			{"", "date_added", GetDateAdded()},
 			{"", "store_id", func(entity Entity) interface{} { return "0" }},
 			{"", "language_id", func(entity Entity) interface{} { return "0" }},
+			{"", "safe", GetSafeStatus("OnCreditHold")}, // default to not safe
 		},
 	}
 }

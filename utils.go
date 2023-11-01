@@ -40,6 +40,16 @@ func GetStatus(activeStatus string) func(Entity) interface{} {
 	}
 }
 
+func GetSafeStatus(activeStatus string) func(Entity) interface{} {
+	return func(entity Entity) interface{} {
+		activeStatus := entity.GetValue("OnCreditHold")
+		if strings.Contains("y", activeStatus.(string)) {
+			return "1"
+		}
+		return "0"
+	}
+}
+
 func GetDateAdded() func(Entity) interface{} {
 	return func(entity Entity) interface{} {
 		return string(time.Now().Format("2006-01-02 15:04:05"))
