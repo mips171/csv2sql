@@ -185,9 +185,9 @@ func GetProductToCostMapping(productIdMapping map[string]int) TableMapping {
 			{"", "supplier_id", func(entity Entity) interface{} { return "0" }}, // Default store value
 			{"Cost", "cost", JustUse("Cost")},
 			{"Cost", "cost_amount", JustUse("Cost")},
-			{"", "cost_percentage", func(entity Entity) interface{} { return "0.00" }},   // Default store value
-			{"", "cost_additional", func(entity Entity) interface{} { return "0.0000" }}, // Default store value
-			{"", "costing_method", func(entity Entity) interface{} { return "0" }},       // Default store value
+			{"", "cost_percentage", func(entity Entity) interface{} { return "0.00" }}, // Default store value
+			{"", "cost_additional", func(entity Entity) interface{} { return "0.00" }}, // Default store value
+			{"", "costing_method", func(entity Entity) interface{} { return "0" }},     // Default store value
 		},
 	}
 }
@@ -231,7 +231,7 @@ func MapSkuToProductId(entity Entity) interface{} {
 func GetRetailPrice(entity Entity) interface{} {
 	retailPrice, ok := entity.GetValue("Price").(string)
 	if !ok || retailPrice == "" {
-		return "0.0000"
+		return "0.00"
 	}
 
 	return removeGSTandFormat(retailPrice)
@@ -240,15 +240,15 @@ func GetRetailPrice(entity Entity) interface{} {
 func removeGSTandFormat(price string) string {
 	priceDec, err := decimal.NewFromString(price)
 	if err != nil {
-		return "0.0000" // Return default value if conversion fails
+		return "0.00" // Return default value if conversion fails
 	}
 
 	// Reverse the 10% GST
 	gstRate := decimal.NewFromFloat(1.10) // GST is 10%, so we divide by 1 + 0.10
-	exGSTPrice := priceDec.DivRound(gstRate, 4)
+	exGSTPrice := priceDec.DivRound(gstRate, 2)
 
 	// Format to string with four decimal places
-	return exGSTPrice.StringFixed(4)
+	return exGSTPrice.StringFixed(2)
 }
 
 func GetTradePrice(entity Entity) interface{} {
@@ -257,28 +257,19 @@ func GetTradePrice(entity Entity) interface{} {
 
 	if okTrade && tradePrice != "" {
 		formattedTradePrice := removeGSTandFormat(tradePrice)
-		if formattedTradePrice != "0.0000" {
+		if formattedTradePrice != "0.00" {
 			return formattedTradePrice
 		}
 	}
 
 	if okRetail && retailPrice != "" {
 		formattedRetailPrice := removeGSTandFormat(retailPrice)
-		if formattedRetailPrice != "0.0000" {
+		if formattedRetailPrice != "0.00" {
 			return formattedRetailPrice
 		}
 	}
 
 	return "0.0000"
-}
-
-func FormatPriceToFourDecimalPlaces(price string) interface{} {
-	priceDec, err := decimal.NewFromString(price)
-	if err != nil {
-		return "0.0000" // Return default value if conversion fails
-	}
-
-	return priceDec.StringFixed(4)
 }
 
 func GetTaxClassID(entity Entity) interface{} {

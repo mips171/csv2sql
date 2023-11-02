@@ -220,7 +220,7 @@ func orders() {
 	for orderID, lineItems := range orderLineItemsMap {
 		subTotalValue, shippingCost, taxValue, totalValue := CalculateOrderTotals(lineItems)
 		orderID = normalizeOrderID(orderID)
-		sqlStatements := GenerateOrderTotalSQLStatements(orderID, subTotalValue.StringFixed(4), shippingCost.StringFixed(4), taxValue.StringFixed(4), totalValue.StringFixed(4))
+		sqlStatements := GenerateOrderTotalSQLStatements(orderID, subTotalValue.StringFixed(2), shippingCost.StringFixed(2), taxValue.StringFixed(2), totalValue.StringFixed(2))
 		for _, stmt := range sqlStatements {
 			sqlFile.WriteString(stmt + "\n")
 		}
