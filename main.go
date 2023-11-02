@@ -282,5 +282,5 @@ func processTable(tableMapping TableMapping, entities []Entity, productIdMapping
 
 func normalizeOrderID(orderID string) string {
 	// FIXME: Replace with proper normalization logic if needed
-	return strings.ReplaceAll(orderID, "N", "")
+	return strings.ReplaceAll(orderID, "N", "10")
 }

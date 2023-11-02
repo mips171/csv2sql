@@ -37,6 +37,8 @@ type CustomerRecord struct {
 	ShipPhone        string `csv:"Ship Phone"`
 	ShipNotes        string `csv:"Internal Notes"`
 	OnCreditHold     string `csv:"On Credit Hold"`
+	CreditLimit      string `csv:"Credit Limit"`
+
 	//... any other fields your CSV might have.
 }
 
@@ -96,6 +98,8 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 		return p.ShipNotes
 	case "OnCreditHold":
 		return p.OnCreditHold
+	case "CreditLimit":
+		return p.CreditLimit
 	default:
 		return ""
 	}
@@ -105,7 +109,7 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 func GetCustomerMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_customer",
-		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added", "store_id", "language_id", "safe"},
+		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added", "store_id", "language_id", "safe", "credit_hold", "credit_limit"},
 		Fields: []FieldMapping{
 			{"Group", "customer_group_id", GetUserGroupID("Group")},  // note - merged in main.go
 			{"BillFirstName", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
@@ -118,6 +122,8 @@ func GetCustomerMapping() TableMapping {
 			{"", "store_id", func(entity Entity) interface{} { return "0" }},
 			{"", "language_id", func(entity Entity) interface{} { return "0" }},
 			{"", "safe", GetSafeStatus("OnCreditHold")},
+			{"", "credit_hold", GetSafeStatus("OnCreditHold")},
+			{"", "credit_limit", JustUse("CreditLimit")},
 		},
 	}
 }

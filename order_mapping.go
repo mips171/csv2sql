@@ -281,7 +281,7 @@ func MapCustomerEmailToID(customerIdMapping map[string]int) func(entity Entity) 
 
 func StripNPrefix(value Entity) interface{} {
 	orderId := value.GetValue("OrderID").(string)
-	return strings.ReplaceAll(orderId, "N", "")
+	return strings.ReplaceAll(orderId, "N", "10")
 }
 
 func MapSKUToProductID(productIdMapping map[string]int) func(entity Entity) interface{} {
@@ -371,11 +371,8 @@ func CalculateReward(entity Entity) interface{} {
 }
 
 func GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxValue, totalValue string) []string {
-	x, _ := decimal.NewFromString(subTotalValue)
-	y, _ := decimal.NewFromString(shippingCost)
-	subTotalLessShipping := x.Sub(y)
 	statements := []string{
-		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%s', 1);", orderID, subTotalLessShipping.StringFixed(2)),
+		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'sub_total', 'Sub-Total', '%s', 1);", orderID, subTotalValue),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%s', 3);", orderID, shippingCost),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%s', 6);", orderID, totalValue),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'GST', '%s', 5);", orderID, taxValue),
@@ -445,7 +442,7 @@ func CalculateOrderTotals(lineItems []OrderRecord) (subTotalValue, shippingCost,
 	}
 
 	// Compute the total value
-	totalValue = subTotalValue.Add(shippingCost)
+	totalValue = subTotalValue.Add(shippingCost).Add(taxValue)
 	return
 }
 
