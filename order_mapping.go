@@ -519,14 +519,14 @@ func MapCustomerGroupID(entity Entity) interface{} {
 func MapOrderStatusID(entity Entity) interface{} {
 	status, _ := entity.GetValue("OrderStatus").(string)
 	statusMap := map[string]string{
-		"Dispatched":     "3",
-		"Cancelled":      "7",
-		"Pending Pickup": "1",
-		"Quote":          "17",
+		"Dispatched":     "4",
+		"Cancelled":      "5",
+		"Pending Pickup": "13",
+		"Quote":          "10",
 		"Pick":           "2",
 		"New":            "1",
-		"Pack":           "2",
-		"On Hold":        "8",
+		"Pack":           "3",
+		"On Hold":        "14",
 	}
 
 	return statusMap[status]
