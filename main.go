@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gocarina/gocsv"
+	"github.com/mips171/leo"
 )
 
 const (
@@ -22,10 +23,48 @@ const (
 
 func main() {
 
-	products()
-	categories()
-	orders()
-	customers()
+	graph := leo.TaskGraph()
+
+	productTask := func() leo.TaskFunc {
+		return func() error {
+			products()
+			return nil
+		}
+	}
+
+	customerTask := func() leo.TaskFunc {
+		return func() error {
+			customers()
+			return nil
+		}
+	}
+
+	ordersTask := func() leo.TaskFunc {
+		return func() error {
+			orders()
+			return nil
+		}
+	}
+
+	categoriesTask := func() leo.TaskFunc {
+		return func() error {
+			categories()
+			return nil
+		}
+	}
+
+	graph.Add("Products", productTask())
+	graph.Add("Categories", categoriesTask())
+	graph.Add("Orders", ordersTask())
+	graph.Add("Customers", customerTask())
+
+	executor := leo.NewExecutor(graph)
+
+	if err := executor.Execute(); err != nil {
+		fmt.Printf("Execution failed: %v\n", err)
+	} else {
+		fmt.Println("All tasks executed successfully.")
+	}
 
 	fmt.Println("SQL file has been generated successfully.")
 }
