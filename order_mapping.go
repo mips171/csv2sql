@@ -265,15 +265,15 @@ func MapCustomerEmailToID(customerIdMapping map[string]int) func(entity Entity) 
 	return func(entity Entity) interface{} {
 		email, ok := entity.GetValue("Email").(string)
 		if !ok {
-			fmt.Println("WARNING: Unable to convert Email to string for entity:", entity)
+			// fmt.Println("WARNING: Unable to convert Email to string for entity:", entity)
 			return "0" // or some other default value or behavior
 		}
 
-		fmt.Println("Processing email:", email) // Debugging line
+		// fmt.Println("Processing email:", email) // Debugging line
 		if id, exists := customerIdMapping[email]; exists {
 			return strconv.Itoa(id)
 		} else {
-			fmt.Printf("WARNING: Email %s not found in customer mapping. Assigning default ID.\n", email)
+			// fmt.Printf("WARNING: Email %s not found in customer mapping. Assigning default ID.\n", email)
 			return "0"
 		}
 	}
@@ -292,7 +292,7 @@ func MapSKUToProductID(productIdMapping map[string]int) func(entity Entity) inte
 			return "0" // or some other default value or behavior
 		}
 
-		fmt.Println("Processing SKU:", sku) // Debugging line
+		// fmt.Println("Processing SKU:", sku) // Debugging line
 		if id, exists := productIdMapping[sku]; exists {
 			return strconv.Itoa(id)
 		} else {
