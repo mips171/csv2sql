@@ -1,8 +1,6 @@
 github.com/gocarina/gocsv v0.0.0-20230616125104-99d496ca653d h1:KbPOUXFUDJxwZ04vbmDOc3yuruGvVO+LOa7cVER3yWw=
 github.com/gocarina/gocsv v0.0.0-20230616125104-99d496ca653d/go.mod h1:5YoVOkjYAQumqlV356Hj3xeYh4BdZuLE0/nRkf2NKkI=
-github.com/mips171/leo v0.0.0-20231104002909-16e864852db2 h1:tr0syV+YBJEhOpiMLSLCSb+Bh/OTjhnHl5OEASHAf5g=
-github.com/mips171/leo v0.0.0-20231104002909-16e864852db2/go.mod h1:Yi9BnU7Kd2bwNk1GnnOu8ZxdwiVw+bbq6+6VdsORjng=
-github.com/mips171/leo v0.1.11 h1:lZOumXCmgD/5En8HkIIUep2beLaWZd6xyOGMRXlV6fU=
-github.com/mips171/leo v0.1.11/go.mod h1:Yi9BnU7Kd2bwNk1GnnOu8ZxdwiVw+bbq6+6VdsORjng=
+github.com/mips171/leo v0.1.10 h1:sF3kuBR2bHCY6ViA266vEcbpa3EWn6J9Cj8sBVsz0PQ=
+github.com/mips171/leo v0.1.10/go.mod h1:Yi9BnU7Kd2bwNk1GnnOu8ZxdwiVw+bbq6+6VdsORjng=
 github.com/shopspring/decimal v1.3.1 h1:2Usl1nmF/WZucqkFZhnfFYxxxu8LG21F6nPQBE5gKV8=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=

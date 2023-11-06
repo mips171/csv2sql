@@ -133,7 +133,7 @@ func MapCategoryToCategoryId(entity Entity) interface{} {
 	return lastID
 }
 
-func GenerateCategorySQLStatements(category CategoryRecord) []string {
+func GenerateCategorySQLStatements(category CategoryRecord, imgPath string) []string {
 	hierarchies := strings.Split(category.Category, ";")
 	var statements []string
 
@@ -145,7 +145,7 @@ func GenerateCategorySQLStatements(category CategoryRecord) []string {
 			currentID := ids[index]
 
 			// SQL for oc_category
-			statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`) VALUES (%d, '', %d, 1, 1, 0, 1, '2023-09-20', '2023-09-20');", currentID, parentID))
+			statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`) VALUES (%d, '%s', %d, 1, 1, 0, 1, '2023-09-20', '2023-09-20');", currentID, imgPath, parentID))
 
 			// SQL for oc_category_description
 			statements = append(statements, fmt.Sprintf("INSERT IGNORE INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_description`, `meta_keyword`) VALUES (%d, 1, '%s', '', '%s', '', '');", currentID, cat, cat))

@@ -135,7 +135,7 @@ func MapImageFilePath(entity Entity) interface{} {
 	sku := entity.GetValue("Model").(string)
 
 	// Define the base path where the images will be stored
-	basePath := "catalog/images/products/"
+	basePath := "catalog/products/"
 
 	// Generate the possible file paths for jpg and png formats
 	jpgPath := basePath + sku + ".jpg"
@@ -157,7 +157,7 @@ func MapAltImageFilePaths(entity Entity) []interface{} {
     sku := entity.GetValue("Model").(string)
 
     // Define the base path where the images will be stored
-    basePath := "catalog/images/products/"
+    basePath := "catalog/products/"
 
     // Initialize a slice to store the paths of existing images
     var imagePaths []interface{}

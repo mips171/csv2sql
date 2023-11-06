@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gocarina/gocsv"
@@ -23,12 +24,11 @@ const (
 
 func main() {
 
-	// if input argument is -txt then just run the sku2txt function
-	if len(os.Args) > 1 && os.Args[1] == "-txt" {
-		sku2txt()
-		return
-	}
-
+	// // if input argument is -txt then just run the sku2txt function
+	// if len(os.Args) > 1 && os.Args[1] == "-txt" {
+	// 	sku2txt()
+	// 	return
+	// }
 
 	graph := leo.TaskGraph()
 
@@ -64,6 +64,8 @@ func main() {
 	graph.Add("Categories", categoriesTask())
 	graph.Add("Orders", ordersTask())
 	graph.Add("Customers", customerTask())
+
+	graph.Succeed("Products", "Categories")
 
 	executor := leo.NewExecutor(graph)
 
@@ -167,8 +169,49 @@ func categories() {
 	sqlFile.WriteString("TRUNCATE TABLE `oc_category_path`;\n")
 	sqlFile.WriteString("TRUNCATE TABLE `oc_category_to_store`;\n")
 
+	// Open the product CSV file
+	productFile, err := os.OpenFile(PRODUCTS_CSV, os.O_RDWR, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer productFile.Close()
+
+	// Decode the product data from CSV
+	var products []ProductRecord
+	if err := gocsv.UnmarshalFile(productFile, &products); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// Assume 'directory' is the path to the directory where images are stored
+	directory := "catalog/products/"
+
+	// Possible image file extensions
+	extensions := []string{".jpg", ".png", ".jpeg"}
+
 	for _, category := range cats {
-		for _, stmt := range GenerateCategorySQLStatements(category) {
+		imgPath := "catalog/products/"
+		for _, p := range products {
+			if p.Category == category.Category {
+				// Iterate over each file extension
+				for _, ext := range extensions {
+					imgPath = filepath.Join(directory, p.Model+ext)
+					if _, err := os.Stat(imgPath); err == nil {
+						// If the file exists, we've found our image
+						break
+					} else if os.IsNotExist(err) {
+						// The file does not exist with this extension, try the next one
+						continue
+					} else {
+						// Some other error occurred when checking the file
+						// Handle this error accordingly
+					}
+				}
+			}
+		}
+
+		for _, stmt := range GenerateCategorySQLStatements(category, imgPath) {
 			sqlFile.WriteString(stmt + "\n")
 		}
 	}
@@ -328,7 +371,6 @@ func products() {
 			fmt.Println("Found", len(altPaths), "alt images for product:", product.Model)
 		}
 
-
 		// for every alt image, generate a sql statement
 		for _, path := range altPaths {
 			sqlFile.WriteString(fmt.Sprintf("INSERT INTO `oc_product_image` (`product_id`, `image`, `sort_order`) VALUES ('%d', '%s', '0');\n", productIdMapping[product.Model], path))
@@ -382,4 +424,3 @@ func sku2txt() {
 		fmt.Fprintf(file, "%s\n", product.Model)
 	}
 }
-
