@@ -23,6 +23,13 @@ const (
 
 func main() {
 
+	// if input argument is -txt then just run the sku2txt function
+	if len(os.Args) > 1 && os.Args[1] == "-txt" {
+		sku2txt()
+		return
+	}
+
+
 	graph := leo.TaskGraph()
 
 	productTask := func() leo.TaskFunc {
@@ -341,3 +348,38 @@ func normalizeOrderID(orderID string) string {
 	// FIXME: Replace with proper normalization logic if needed
 	return strings.ReplaceAll(orderID, "N", "10")
 }
+
+func sku2txt() {
+
+	PRODUCTS_TXT := "products.txt"
+	// Open the file
+	file, err := os.OpenFile(PRODUCTS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// Decode the CSV data
+	var products []ProductRecord
+	if err := gocsv.UnmarshalFile(file, &products); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// write all products to products.txt
+
+	// Open the file
+	file, err = os.OpenFile(PRODUCTS_TXT, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// write the SKU as plain text, one per line
+	for _, product := range products {
+		fmt.Fprintf(file, "%s\n", product.Model)
+	}
+}
+
