@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -150,4 +151,30 @@ func MapImageFilePath(entity Entity) interface{} {
 		// If neither file exists, return an empty string or handle the error as needed
 		return "catalog/journal3/placeholder-1100x1100.png"
 	}
+}
+
+func MapAltImageFilePaths(entity Entity) []interface{} {
+    sku := entity.GetValue("Model").(string)
+
+    // Define the base path where the images will be stored
+    basePath := "catalog/images/products/"
+
+    // Initialize a slice to store the paths of existing images
+    var imagePaths []interface{}
+
+    // Iterate over possible alternate images
+    for i := 1; i <= 10; i++ {
+        altJpgPath := fmt.Sprintf("%s/%s_alt_%d.jpg", basePath, sku, i)
+        altPngPath := fmt.Sprintf("%s/%s_alt_%d.png", basePath, sku, i )
+
+        // Check for the alternate jpg images
+        if _, err := os.Stat(altJpgPath); err == nil {
+            imagePaths = append(imagePaths, altJpgPath)
+        } else if _, err := os.Stat(altPngPath); err == nil {
+            // If alternate jpg does not exist, check for the alternate png image
+            imagePaths = append(imagePaths, altPngPath)
+        }
+    }
+
+    return imagePaths
 }

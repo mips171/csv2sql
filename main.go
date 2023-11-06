@@ -309,6 +309,24 @@ func products() {
 	processTable(GetProductToStoreMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToCostMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetProductToCategoryMapping(productIdMapping), entities, productIdMapping, sqlFile)
+
+	sqlFile.WriteString("TRUNCATE TABLE `oc_product_image`;\n")
+	// for every product, get its alt images
+	for _, product := range products {
+		altPaths := MapAltImageFilePaths(product)
+
+		if len(altPaths) == 0 {
+			fmt.Println("No alt images found for product:", product.Model)
+		} else {
+			fmt.Println("Found", len(altPaths), "alt images for product:", product.Model)
+		}
+
+
+		// for every alt image, generate a sql statement
+		for _, path := range altPaths {
+			sqlFile.WriteString(fmt.Sprintf("INSERT INTO `oc_product_image` (`product_id`, `image`, `sort_order`) VALUES ('%d', '%s', '0');\n", productIdMapping[product.Model], path))
+		}
+	}
 }
 
 func processTable(tableMapping TableMapping, entities []Entity, productIdMapping map[string]int, sqlFile *os.File) {

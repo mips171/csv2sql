@@ -376,6 +376,7 @@ func GenerateOrderTotalSQLStatements(orderID, subTotalValue, shippingCost, taxVa
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'shipping', 'Shipping', '%s', 3);", orderID, shippingCost),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'total', 'Total', '%s', 6);", orderID, totalValue),
 		fmt.Sprintf("INSERT IGNORE INTO `oc_order_total` (`order_id`, `code`, `title`, `value`, `sort_order`) VALUES ('%s', 'tax', 'GST', '%s', 5);", orderID, taxValue),
+		fmt.Sprintf("UPDATE `oc_order` set total = '%s' WHERE order_id = '%s';", totalValue, orderID),
 	}
 
 	return statements
