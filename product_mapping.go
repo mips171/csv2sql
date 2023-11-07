@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/shopspring/decimal"
 )
@@ -134,13 +135,22 @@ func GetProductDescriptionMapping(productIdMapping map[string]int) TableMapping 
 			{"Model", "product_id", GetProductIdTransformation(productIdMapping)},
 			{"", "language_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for English
 			{"Name", "name", JustUse("Name")},
-			{"Description", "description", JustUse("Description")},
+			{"Description", "description", MapDescriptionURLs},
 			{"", "tag", func(entity Entity) interface{} { return "" }},
 			{"Name", "meta_title", JustUse("Name")},
 			{"Name", "meta_description", JustUse("Name")},
 			{"Name", "meta_keyword", JustUse("Name")},
 		},
 	}
+}
+
+// Update any URLs in the description to use the new paths
+func MapDescriptionURLs(entity Entity) interface{} {
+	description := entity.GetValue("Description").(string)
+
+	// Replace any old URLs with the new ones
+	description = strings.Replace(description, "assets/imported/site/sites/default/files", "image/catalog", -1)
+	return description
 }
 
 // Map out our actual SQL for ProductToRelated
