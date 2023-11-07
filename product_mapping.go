@@ -150,6 +150,8 @@ func MapDescriptionURLs(entity Entity) interface{} {
 
 	// Replace any old URLs with the new ones
 	description = strings.Replace(description, "assets/imported/site/sites/default/files", "image/catalog", -1)
+	description = strings.Replace(description, "//www.telcoantennas.com.au", "", -1)
+
 	return description
 }
 
