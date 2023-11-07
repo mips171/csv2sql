@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocarina/gocsv"
 	"github.com/mips171/leo"
 )
@@ -24,11 +25,19 @@ const (
 
 func main() {
 
-	// // if input argument is -txt then just run the sku2txt function
-	// if len(os.Args) > 1 && os.Args[1] == "-txt" {
-	// 	sku2txt()
-	// 	return
-	// }
+	// if input argument is -txt then just run the sku2txt function
+	if len(os.Args) > 1 && os.Args[1] == "-txt" {
+		sku2txt()
+		return
+	}
+
+	// if input argument is -txt then just run the sku2txt function
+	if len(os.Args) > 1 && os.Args[1] == "-img" {
+		getImageURLs()
+		return
+	}
+
+
 
 	graph := leo.TaskGraph()
 
@@ -424,3 +433,60 @@ func sku2txt() {
 		fmt.Fprintf(file, "%s\n", product.Model)
 	}
 }
+
+func getImageURLs() {
+
+	PRODUCTS_TXT := "emdedded_files.txt"
+	// Open the file
+	file, err := os.OpenFile(PRODUCTS_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// Decode the CSV data
+	var products []ProductRecord
+	if err := gocsv.UnmarshalFile(file, &products); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// write all products to products.txt
+
+	// Open the file
+	file, err = os.OpenFile(PRODUCTS_TXT, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// write the imag path as plain text, one per line
+	for _, product := range products {
+
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(product.Description))
+		if err != nil {
+			fmt.Printf("Error parsing the HTML: %v\n", err)
+			return
+		}
+
+		// Find all links with href attribute
+		doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
+			href, exists := s.Attr("href")
+			if exists && strings.HasSuffix(href, ".pdf") {
+				fmt.Fprintf(file, "%s\n", href)
+			}
+		})
+
+		// Find all image tags and extract the src attribute
+		doc.Find("img[src]").Each(func(i int, s *goquery.Selection) {
+			src, exists := s.Attr("src")
+			if exists && (strings.HasSuffix(src, ".png") || strings.HasSuffix(src, ".jpg") || strings.HasSuffix(src, ".jpeg") || strings.HasSuffix(src, ".gif")) {
+				fmt.Fprintf(file, "%s\n", src)
+			}
+		})
+
+	}
+}
+
