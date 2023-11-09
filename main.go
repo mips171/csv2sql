@@ -16,11 +16,13 @@ const (
 	CUSTOMERS_CSV       = "./data/customer_export_full_20231101_114614_40007.csv"
 	CUSTOMER_GROUPS_CSV = "./data/customer_groups.csv"
 	ORDERS_CSV          = "./data/orders_export_full_20231101_114706_57298.csv"
+	INFO_CSV            = "./data/content_export_popular_20230815_210105_40905.csv"
 
 	OUTPUT_CUSTOMERS_SQL  = "./data/import_customers.sql"
 	OUTPUT_CATEGORIES_SQL = "./data/import_categories.sql"
 	OUTPUT_ORDERS_SQL     = "./data/import_orders.sql"
 	OUTPUT_PRODUCTS_SQL   = "./data/import_products.sql"
+	OUTPUT_INFO_SQL       = "./data/import_info.sql"
 )
 
 func main() {
@@ -36,8 +38,6 @@ func main() {
 		getImageURLs()
 		return
 	}
-
-
 
 	graph := leo.TaskGraph()
 
@@ -69,10 +69,18 @@ func main() {
 		}
 	}
 
+	infoTask := func() leo.TaskFunc {
+		return func() error {
+			information()
+			return nil
+		}
+	}
+
 	graph.Add("Products", productTask())
 	graph.Add("Categories", categoriesTask())
 	graph.Add("Orders", ordersTask())
 	graph.Add("Customers", customerTask())
+	graph.Add("Information", infoTask())
 
 	graph.Succeed("Products", "Categories")
 
@@ -387,6 +395,47 @@ func products() {
 	}
 }
 
+func information() {
+	productMapping := GetInformationMapping()
+
+	// Open the file
+	file, err := os.OpenFile(INFO_CSV, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	// Decode the CSV data
+	var products []InformationRecord
+	if err := gocsv.UnmarshalFile(file, &products); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	sqlFile, err := os.Create(OUTPUT_INFO_SQL)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer sqlFile.Close()
+
+	productIdMapping := make(map[string]int)
+	for index, product := range products {
+		productIdMapping[product.Name] = index + 1
+	}
+
+	entities := make([]Entity, len(products))
+	for i, v := range products {
+		entities[i] = v
+	}
+
+	// Use the helper function for each mapping
+	processTable(productMapping, entities, productIdMapping, sqlFile)
+	processTable(GetInformationDescriptionMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetInfoToStoreMapping(productIdMapping), entities, productIdMapping, sqlFile)
+}
+
 func processTable(tableMapping TableMapping, entities []Entity, productIdMapping map[string]int, sqlFile *os.File) {
 	sqlFile.WriteString("TRUNCATE TABLE `" + tableMapping.TableName + "`;\n")
 	insertStatements := GenerateInsertStatement(tableMapping.TableName, tableMapping.ColumnOrder, entities, tableMapping.Fields)
@@ -489,4 +538,3 @@ func getImageURLs() {
 
 	}
 }
-
