@@ -37,44 +37,57 @@ func (r InformationRecord) GetValue(fieldName string) interface{} {
 	}
 }
 
-// INSERT INTO `oc_information` (`information_id`, `bottom`, `sort_order`, `status`) VALUES
+// IINSERT INTO `oc_journal3_blog_post` (`post_id`, `author_id`, `image`, `comments`, `status`, `sort_order`, `date_created`, `date_updated`, `views`, `post_data`) VALUES ('13', '0', ”, '0', '1', '0', '2023-11-09 10:44:26', '2023-11-09 10:44:26', '1', 'null');
 func GetInformationMapping() TableMapping {
 	return TableMapping{
-		TableName:   "oc_information",
-		ColumnOrder: []string{"bottom", "sort_order", "status"},
+		TableName:   "oc_journal3_blog_post",
+		ColumnOrder: []string{"status", "comments", "date_created", "date_updated"},
 		Fields: []FieldMapping{
-			{"", "bottom", func(entity Entity) interface{} { return "1" }},
-			{"", "sort_order", func(entity Entity) interface{} { return "0" }},
 			{"", "status", func(entity Entity) interface{} { return "1" }},
+			{"", "comments", func(entity Entity) interface{} { return "0" }},
+			{"", "date_created", func(entity Entity) interface{} { return "2023-11-09 10:44:26" }},
+			{"", "date_updated", func(entity Entity) interface{} { return "2023-11-09 11:44:26" }},
 		},
 	}
 }
 
-// INSERT INTO `oc_information_description` (`information_id`, `language_id`, `title`, `description`, `meta_title`, `meta_description`, `meta_keyword`) VALUES
+// INSERT INTO `oc_journal3_blog_post_description` (`post_id`, `language_id`, `name`, `description`, `meta_title`, `meta_keywords`, `meta_robots`, `meta_description`, `keyword`, `tags`) VALUES ('13', '1', 'New Blog Post', '<p>Blog Content</p>', ”, ”, ”, ”, 'SEO Text', ”);
 func GetInformationDescriptionMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
-		TableName:   "oc_information_description",
-		ColumnOrder: []string{"information_id", "language_id", "title", "description", "tag", "meta_title", "meta_description", "meta_keyword"},
+		TableName:   "oc_journal3_blog_post_description",
+		ColumnOrder: []string{"post_id", "language_id", "name", "description", "meta_title", "meta_description", "keyword"},
 		Fields: []FieldMapping{
-			{"Name", "information_id", GetInfodTransformation(productIdMapping)},
+			{"Name", "post_id", GetInfodTransformation(productIdMapping)},
 			{"", "language_id", func(entity Entity) interface{} { return "1" }}, // Always 1 for English
-			{"Name", "title", JustUse("Name")},
+			{"Name", "name", JustUse("Name")},
 			{"Content", "description", JustUse("Content")},
-			{"Meta", "tag", JustUse("")},
-			{"Name", "meta_title", JustUse("Title")},
+			{"Name", "meta_title", JustUse("Name")},
 			{"Meta", "meta_description", JustUse("Meta")},
-			{"Keywords", "meta_keyword", JustUse("Keywords")},
+			{"Keywords", "keyword", JustUse("Keywords")},
 		},
 	}
 }
 
 func GetInfoToStoreMapping(productIdMapping map[string]int) TableMapping {
 	return TableMapping{
-		TableName:   "oc_information_to_store",
-		ColumnOrder: []string{"information_id", "store_id"},
+		TableName:   "oc_journal3_blog_post_to_store",
+		ColumnOrder: []string{"post_id", "store_id"},
 		Fields: []FieldMapping{
-			{"Name", "information_id", GetInfodTransformation(productIdMapping)},
+			{"Name", "post_id", GetInfodTransformation(productIdMapping)},
 			{"", "store_id", func(entity Entity) interface{} { return "0" }},
+		},
+	}
+}
+
+// INSERT INTO `oc_journal3_blog_post_to_layout` (`post_id`, `store_id`, `layout_id`) VALUES ('13', '0', '16');
+func GetInfoToLayoutMapping(productIdMapping map[string]int) TableMapping {
+	return TableMapping{
+		TableName:   "oc_journal3_blog_post_to_layout",
+		ColumnOrder: []string{"post_id", "store_id", "layout_id"},
+		Fields: []FieldMapping{
+			{"Name", "post_id", GetInfodTransformation(productIdMapping)},
+			{"", "store_id", func(entity Entity) interface{} { return "0" }},
+			{"", "layout_id", func(entity Entity) interface{} { return "16" }},
 		},
 	}
 }

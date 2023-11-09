@@ -16,7 +16,7 @@ const (
 	CUSTOMERS_CSV       = "./data/customer_export_full_20231101_114614_40007.csv"
 	CUSTOMER_GROUPS_CSV = "./data/customer_groups.csv"
 	ORDERS_CSV          = "./data/orders_export_full_20231101_114706_57298.csv"
-	INFO_CSV            = "./data/content_export_popular_20230815_210105_40905.csv"
+	INFO_CSV            = "./data/content.csv"
 
 	OUTPUT_CUSTOMERS_SQL  = "./data/import_customers.sql"
 	OUTPUT_CATEGORIES_SQL = "./data/import_categories.sql"
@@ -434,6 +434,7 @@ func information() {
 	processTable(productMapping, entities, productIdMapping, sqlFile)
 	processTable(GetInformationDescriptionMapping(productIdMapping), entities, productIdMapping, sqlFile)
 	processTable(GetInfoToStoreMapping(productIdMapping), entities, productIdMapping, sqlFile)
+	processTable(GetInfoToLayoutMapping(productIdMapping), entities, productIdMapping, sqlFile)
 }
 
 func processTable(tableMapping TableMapping, entities []Entity, productIdMapping map[string]int, sqlFile *os.File) {
