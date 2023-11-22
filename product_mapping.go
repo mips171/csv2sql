@@ -23,7 +23,7 @@ type ProductRecord struct {
 	Length             string `csv:"Length (Shipping)"`
 	Width              string `csv:"Width (Shipping)"`
 	Height             string `csv:"Height (Shipping)"`
-	Weight             string `csv:"Weight (Shipping)"` // be sure to check sneaky neto who calls it Weigh (shipping) note the lowercase s
+	Weight             string `csv:"Weight (shipping)"` // be sure to check sneaky neto who calls it Weigh (shipping) note the lowercase s
 	TaxClassId         string `csv:"Tax Free Item"`
 	DateAdded          string `csv:"Date Added"`
 	DateModified       string `csv:"Date Modified"`
