@@ -109,11 +109,11 @@ func (p CustomerRecord) GetValue(fieldName string) interface{} {
 func GetCustomerMapping() TableMapping {
 	return TableMapping{
 		TableName:   "oc_customer",
-		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added", "store_id", "language_id", "safe", "credit_hold", "credit_limit"},
+		ColumnOrder: []string{"customer_group_id", "firstname", "lastname", "email", "telephone", "newsletter", "status", "date_added", "store_id", "language_id", "safe", "credit_hold", "credit_limit", "abn", "company"},
 		Fields: []FieldMapping{
-			{"Group", "customer_group_id", GetUserGroupID("Group")},  // note - merged in main.go
-			{"BillFirstName", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
-			{"BillLastName", "lastname", JustUse("BillLastName")},    // use lastname as the default, email as backup
+			{"Group", "customer_group_id", GetUserGroupID("Group")}, // note - merged in main.go
+			{"", "firstname", GetFirstName("BillFirstName")},        // use firstname as the default, email as backup
+			{"", "lastname", GetLastName("BillLastName")},           // use lastname as the default, email as backup
 			{"Email", "email", JustUse("Email")},
 			{"Phone", "telephone", JustUse("Phone")},
 			{"Newsletter", "newsletter", GetNewsletterStatus("Newsletter")},
@@ -124,6 +124,8 @@ func GetCustomerMapping() TableMapping {
 			{"", "safe", GetSafeStatus("OnCreditHold")},
 			{"", "credit_hold", GetSafeStatus("OnCreditHold")},
 			{"", "credit_limit", JustUse("CreditLimit")},
+			{"ABNACN", "abn", JustUse("ABNACN")},
+			{"BillCompany", "company", JustUse("BillCompany")},
 		},
 	}
 }
@@ -134,8 +136,8 @@ func GetCustomerAddressMapping(customerIdMapping map[string]int) TableMapping {
 		ColumnOrder: []string{"customer_id", "firstname", "lastname", "company", "address_1", "address_2", "city", "postcode", "country_id", "zone_id"},
 		Fields: []FieldMapping{
 			{"", "customer_id", GetCustomerIdTransformation(customerIdMapping)},
-			{"BillFirstName", "firstname", JustUse("BillFirstName")}, // use firstname as the default, email as backup
-			{"BillLastName", "lastname", JustUse("BillLastName")},    // use lastname as the default, email as backup
+			{"", "firstname", GetFirstName("BillFirstName")}, // use firstname as the default, email as backup
+			{"", "lastname", GetLastName("BillLastName")},    // use lastname as the default, email as backup
 			{"BillCompany", "company", JustUse("BillCompany")},
 			{"BillAddress", "address_1", JustUse("BillAddress")},
 			{"BillAddress2", "address_2", JustUse("BillAddress2")},

@@ -79,25 +79,33 @@ func ToUpperCase(fieldName string) func(Entity) interface{} {
 	}
 }
 
-func GetFirstName(firstName string, email string) func(Entity) interface{} {
+func GetFirstName(fieldName string) func(Entity) interface{} {
 	return func(entity Entity) interface{} {
-		if firstName != "" {
-			return firstName
+		name := entity.GetValue(fieldName)
+
+		if name != "" {
+			return name
 		}
+		email := entity.GetValue("Email").(string)
 		parts := strings.Split(email, "@")
 		if len(parts) > 0 {
 			return parts[0]
 		}
-		return "firstname"
+		return "Firstname"
 	}
 
 }
 
-func GetLastName(surname string, email string) func(Entity) interface{} {
-	return func(e Entity) interface{} {
-		if surname != "" {
-			return surname
+func GetLastName(fieldName string) func(Entity) interface{} {
+	return func(entity Entity) interface{} {
+		name := entity.GetValue(fieldName)
+
+		if name != "" {
+			return name
 		}
+
+		email := entity.GetValue("Email").(string)
+
 		parts := strings.Split(email, "@")
 		if len(parts) > 1 {
 			domainParts := strings.Split(parts[1], ".")
@@ -105,7 +113,29 @@ func GetLastName(surname string, email string) func(Entity) interface{} {
 				return domainParts[0]
 			}
 		}
-		return "surname"
+		return "Surname"
+	}
+}
+
+func GetDateDue(fieldName string) func(Entity) interface{} {
+	return func(entity Entity) interface{} {
+		date := entity.GetValue(fieldName)
+
+		if date != "0000-00-00 00:00:00" {
+			return date
+		}
+		return entity.GetValue("DateAdded").(string)
+	}
+}
+
+func GetDateModified(fieldName string) func(Entity) interface{} {
+	return func(entity Entity) interface{} {
+		date := entity.GetValue(fieldName)
+
+		if date != "0000-00-00" {
+			return date
+		}
+		return entity.GetValue("DateAdded").(string)
 	}
 }
 
@@ -154,27 +184,27 @@ func MapImageFilePath(entity Entity) interface{} {
 }
 
 func MapAltImageFilePaths(entity Entity) []interface{} {
-    sku := entity.GetValue("Model").(string)
+	sku := entity.GetValue("Model").(string)
 
-    // Define the base path where the images will be stored
-    basePath := "catalog/products/"
+	// Define the base path where the images will be stored
+	basePath := "catalog/products/"
 
-    // Initialize a slice to store the paths of existing images
-    var imagePaths []interface{}
+	// Initialize a slice to store the paths of existing images
+	var imagePaths []interface{}
 
-    // Iterate over possible alternate images
-    for i := 1; i <= 10; i++ {
-        altJpgPath := fmt.Sprintf("%s/%s_alt_%d.jpg", basePath, sku, i)
-        altPngPath := fmt.Sprintf("%s/%s_alt_%d.png", basePath, sku, i )
+	// Iterate over possible alternate images
+	for i := 1; i <= 10; i++ {
+		altJpgPath := fmt.Sprintf("%s/%s_alt_%d.jpg", basePath, sku, i)
+		altPngPath := fmt.Sprintf("%s/%s_alt_%d.png", basePath, sku, i)
 
-        // Check for the alternate jpg images
-        if _, err := os.Stat(altJpgPath); err == nil {
-            imagePaths = append(imagePaths, altJpgPath)
-        } else if _, err := os.Stat(altPngPath); err == nil {
-            // If alternate jpg does not exist, check for the alternate png image
-            imagePaths = append(imagePaths, altPngPath)
-        }
-    }
+		// Check for the alternate jpg images
+		if _, err := os.Stat(altJpgPath); err == nil {
+			imagePaths = append(imagePaths, altJpgPath)
+		} else if _, err := os.Stat(altPngPath); err == nil {
+			// If alternate jpg does not exist, check for the alternate png image
+			imagePaths = append(imagePaths, altPngPath)
+		}
+	}
 
-    return imagePaths
+	return imagePaths
 }

@@ -51,6 +51,7 @@ type OrderRecord struct {
 	CurrencyCode         string `csv:"Currency Code"`
 	DateAdded            string `csv:"Date Placed"`
 	DateModified         string `csv:"Date Invoiced"`
+	DatePaymentDue       string `csv:"Payment Due Date"`
 	OrderLineTaxFree     string `csv:"Order Line Tax Free"`
 	OrderLineSKU         string `csv:"Order Line SKU"`
 	OrderLineQty         string `csv:"Order Line Qty"`
@@ -139,6 +140,8 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 		return o.DateAdded
 	case "DateModified":
 		return o.DateModified
+	case "DatePaymentDue":
+		return o.DatePaymentDue
 	case "OrderLineSKU":
 		return o.OrderLineSKU
 	case "OrderLineQty":
@@ -190,7 +193,7 @@ func (o OrderRecord) GetValue(fieldName string) interface{} {
 func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 	return TableMapping{
 		TableName:   "oc_order",
-		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_zone", "payment_zone_id", "payment_country", "payment_country_id", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_zone", "shipping_zone_id", "shipping_country", "shipping_country_id", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "currency_id", "currency_code", "currency_value"},
+		ColumnOrder: []string{"order_id", "invoice_no", "store_id", "customer_id", "firstname", "lastname", "email", "telephone", "payment_firstname", "payment_lastname", "payment_company", "payment_address_1", "payment_address_2", "payment_city", "payment_postcode", "payment_zone", "payment_zone_id", "payment_country", "payment_country_id", "payment_method", "payment_code", "shipping_firstname", "shipping_lastname", "shipping_company", "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_postcode", "shipping_zone", "shipping_zone_id", "shipping_country", "shipping_country_id", "shipping_method", "shipping_code", "comment", "total", "order_status_id", "date_added", "date_modified", "date_payment_due", "currency_id", "currency_code", "currency_value"},
 		Fields: []FieldMapping{
 			// No need for order_id since it's managed by the database.
 			// As an example, here are a few more mappings:
@@ -232,7 +235,8 @@ func GetOrderMapping(customerEmailMapping map[string]int) TableMapping {
 			{"Total", "total", JustUse("Total")},
 			{"OrderStatus", "order_status_id", MapOrderStatusID},
 			{"DateAdded", "date_added", JustUse("DateAdded")},
-			{"DateModified", "date_modified", JustUse("DateModified")},
+			{"DateModified", "date_modified", GetDateModified("DateModified")},
+			{"", "date_payment_due", GetDateDue("DatePaymentDue")},
 			{"", "currency_id", func(entity Entity) interface{} { return "1" }},             // Default currency ID for AUD
 			{"", "currency_code", func(entity Entity) interface{} { return "AUD" }},         // Default currency code for AUD
 			{"", "currency_value", func(entity Entity) interface{} { return "1.00000000" }}, // Default currency value for AUD
@@ -518,16 +522,21 @@ func MapCustomerGroupID(entity Entity) interface{} {
 }
 
 func MapOrderStatusID(entity Entity) interface{} {
+	if entity.GetValue("AmountPaid") != entity.GetValue("Total") {
+		return "15"
+	}
+
 	status, _ := entity.GetValue("OrderStatus").(string)
 	statusMap := map[string]string{
-		"Dispatched":     "4",
-		"Cancelled":      "5",
-		"Pending Pickup": "13",
-		"Quote":          "10",
-		"Pick":           "2",
-		"New":            "1",
-		"Pack":           "3",
-		"On Hold":        "14",
+		"Dispatched":      "4",
+		"Cancelled":       "5",
+		"Pending Pickup":  "13",
+		"Quote":           "10",
+		"Pick":            "2",
+		"New":             "1",
+		"Pack":            "3",
+		"On Hold":         "14",
+		"Sent On Account": "15",
 	}
 
 	return statusMap[status]
