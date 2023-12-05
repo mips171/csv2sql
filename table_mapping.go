@@ -10,9 +10,9 @@ type FieldMapping struct {
 }
 
 type TableMapping struct {
-	TableName   string
 	ColumnOrder []string
 	Fields      []FieldMapping
+	TableName   string
 }
 
 func TransformIdentity(value string) string {
