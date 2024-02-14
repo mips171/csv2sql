@@ -139,7 +139,7 @@ func GetCustomerAddressMapping(customerIdMapping map[string]int) TableMapping {
 			{"", "firstname", GetFirstName("BillFirstName")}, // use firstname as the default, email as backup
 			{"", "lastname", GetLastName("BillLastName")},    // use lastname as the default, email as backup
 			{"BillCompany", "company", JustUse("BillCompany")},
-			{"BillAddress", "address_1", JustUse("BillAddress")},
+			{"BillAddress1", "address_1", JustUse("BillAddress1")},
 			{"BillAddress2", "address_2", JustUse("BillAddress2")},
 			{"BillCity", "city", JustUse("BillCity")},
 			{"BillPostCode", "postcode", JustUse("BillPostCode")},
